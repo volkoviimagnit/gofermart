@@ -26,3 +26,7 @@ func (c *Config) GetDatabaseURI() string {
 func (c *Config) GetAccrualSystemAddress() string {
 	return c.accrualSystemAddress
 }
+
+func (c *Config) IsDebugMode() bool {
+	return c.logLevel == "debug" || c.logLevel == "trace"
+}

@@ -5,4 +5,5 @@ type IConfig interface {
 	GetDatabaseURI() string
 	GetAccrualSystemAddress() string
 	GetLogLevel() string
+	IsDebugMode() bool
 }
