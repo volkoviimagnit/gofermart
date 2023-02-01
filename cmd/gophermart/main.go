@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/volkoviimagnit/gofermart/internal/config"
 	"github.com/volkoviimagnit/gofermart/internal/handlers"
+	"github.com/volkoviimagnit/gofermart/internal/repository"
 )
 
 func main() {
@@ -28,8 +29,10 @@ func main() {
 
 	logrus.Debugf("params: %+v", params)
 
-	userRegisterHandler := handlers.NewUserRegisterHandler()
-	userLoginHandler := handlers.NewUserLoginHandler()
+	userRepository := repository.NewUserRepositoryMem()
+
+	userRegisterHandler := handlers.NewUserRegisterHandler(userRepository)
+	userLoginHandler := handlers.NewUserLoginHandler(userRepository)
 	userOrderPOSTHandler := handlers.NewUserOrderPOSTHandler()
 	userOrderGETHandler := handlers.NewUserOrdersGETHandler()
 	userBalanceHandler := handlers.NewUserBalanceHandler()
@@ -62,11 +65,11 @@ func main() {
 }
 
 func listenShutDown() {
-	termChan := make(chan os.Signal)
-	signal.Notify(termChan, syscall.SIGTERM, syscall.SIGINT)
+	c := make(chan os.Signal, 0)
+	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
 	go func() {
-		<-termChan // Blocks here until interrupted
+		<-c // Blocks here until interrupted
 		os.Exit(1)
 	}()
 }

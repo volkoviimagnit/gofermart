@@ -1,6 +1,12 @@
 package handlers
 
-import "net/http"
+import (
+	"io"
+	"net/http"
+
+	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
+	"github.com/volkoviimagnit/gofermart/internal/handlers/response"
+)
 
 type UserOrdersPOSTHandler struct {
 	parent *AbstractHandler
@@ -27,5 +33,31 @@ func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, request *http.
 	//http.StatusUnprocessableEntity
 	// http.StatusInternalServerError
 
-	h.parent.RenderResponse(rw, http.StatusOK, []byte("UserOrdersPOSTHandler"))
+	resp := response.NewResponse("text/plain")
+	dto, errBody := h.extractRequestDTO(request)
+	if errBody != nil {
+		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errBody.Error()))
+		h.parent.Render(rw, resp)
+		return
+	}
+
+	errValidation := dto.Validate()
+	if errValidation != nil {
+		resp.SetStatus(http.StatusBadRequest).SetBody([]byte(errValidation.Error()))
+		h.parent.Render(rw, resp)
+		return
+	}
+
+	resp.SetStatus(http.StatusAccepted).SetBody([]byte(dto.GetNumber()))
+	h.parent.Render(rw, resp)
+	return
+}
+
+func (h *UserOrdersPOSTHandler) extractRequestDTO(r *http.Request) (*request.UserOrdersPOSTDTO, error) {
+	body, errBody := io.ReadAll(r.Body)
+	if errBody != nil {
+		return nil, errBody
+	}
+	requestDTO := request.NewUserOrdersPOSTDTO(string(body))
+	return requestDTO, nil
 }

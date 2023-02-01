@@ -3,6 +3,8 @@ package handlers
 import (
 	"log"
 	"net/http"
+
+	"github.com/volkoviimagnit/gofermart/internal/handlers/response"
 )
 
 type AbstractHandler struct {
@@ -14,6 +16,15 @@ func NewAbstractHandler(httpMethod string, httpPattern string) *AbstractHandler 
 	return &AbstractHandler{
 		httpMethod:  httpMethod,
 		httpPattern: httpPattern,
+	}
+}
+
+func (h *AbstractHandler) Render(rw http.ResponseWriter, resp *response.Response) {
+	rw.Header().Set("Content-Type", resp.GetContentType())
+	rw.WriteHeader(resp.GetStatus())
+	_, err := rw.Write(resp.GetBody())
+	if err != nil {
+		log.Fatal("rw.Write error in update")
 	}
 }
 
