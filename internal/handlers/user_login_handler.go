@@ -7,17 +7,20 @@ import (
 	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/response"
 	"github.com/volkoviimagnit/gofermart/internal/repository"
+	"github.com/volkoviimagnit/gofermart/internal/security"
 )
 
 type UserLoginHandler struct {
 	parent         *AbstractHandler
 	userRepository repository.IUserRepository
+	auth           security.IAuthenticator
 }
 
-func NewUserLoginHandler(userRepository repository.IUserRepository) IHandler {
+func NewUserLoginHandler(userRepository repository.IUserRepository, auth security.IAuthenticator) IHandler {
 	return &UserLoginHandler{
 		parent:         NewAbstractHandler(http.MethodPost, "/api/user/login"),
 		userRepository: userRepository,
+		auth:           auth,
 	}
 }
 
@@ -53,14 +56,23 @@ func (h *UserLoginHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	user, errRepository := h.userRepository.GetOneByCredentials(dto.GetLogin(), dto.GetPassword())
-	if errRepository != nil {
+	if errRepository != nil || user == nil {
 		resp.SetStatus(http.StatusUnauthorized).SetBody([]byte(errRepository.Error()))
 		h.parent.Render(rw, resp)
 		return
 	}
 
-	dto.Login = user.Id()
-	body, errMarshaling := json.Marshal(dto)
+	accessToken := h.auth.CreateAuthenticatedToken()
+	tokenDTO := response.NewUserLoginDTO(accessToken)
+	user.SetToken(accessToken)
+	errUserUpdating := h.userRepository.Update(*user)
+	if errUserUpdating != nil {
+		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errUserUpdating.Error()))
+		h.parent.Render(rw, resp)
+		return
+	}
+
+	body, errMarshaling := json.Marshal(tokenDTO)
 	if errMarshaling != nil {
 		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errMarshaling.Error()))
 		h.parent.Render(rw, resp)

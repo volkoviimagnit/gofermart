@@ -13,6 +13,7 @@ import (
 	"github.com/volkoviimagnit/gofermart/internal/config"
 	"github.com/volkoviimagnit/gofermart/internal/handlers"
 	"github.com/volkoviimagnit/gofermart/internal/repository"
+	"github.com/volkoviimagnit/gofermart/internal/security"
 )
 
 func main() {
@@ -30,10 +31,11 @@ func main() {
 	logrus.Debugf("params: %+v", params)
 
 	userRepository := repository.NewUserRepositoryMem()
+	authenticator := security.NewAuthenticator(userRepository)
 
 	userRegisterHandler := handlers.NewUserRegisterHandler(userRepository)
-	userLoginHandler := handlers.NewUserLoginHandler(userRepository)
-	userOrderPOSTHandler := handlers.NewUserOrderPOSTHandler()
+	userLoginHandler := handlers.NewUserLoginHandler(userRepository, authenticator)
+	userOrderPOSTHandler := handlers.NewUserOrderPOSTHandler(authenticator)
 	userOrderGETHandler := handlers.NewUserOrdersGETHandler()
 	userBalanceHandler := handlers.NewUserBalanceHandler()
 	userBalanceWithdrawHandler := handlers.NewUserBalanceWithdrawHandler()

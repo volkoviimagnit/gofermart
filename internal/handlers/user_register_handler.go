@@ -52,27 +52,29 @@ func (h *UserRegisterHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	user := model.User{}
+	user, errConflict := h.userRepository.GetOneByLogin(dto.GetLogin())
+	if errConflict != nil {
+		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errConflict.Error()))
+		h.parent.Render(rw, resp)
+		return
+	}
+	if user != nil {
+		resp.SetStatus(http.StatusConflict).SetBody([]byte("логин уже занят"))
+		h.parent.Render(rw, resp)
+		return
+	}
+
+	user = &model.User{}
 	user.SetLogin(dto.Login)
 	user.SetPassword(dto.Password)
-	errRepository := h.userRepository.Insert(user)
+	errRepository := h.userRepository.Insert(*user)
 	if errRepository != nil {
 		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errRepository.Error()))
 		h.parent.Render(rw, resp)
 		return
 	}
 
-	entity, _ := h.userRepository.GetOneByCredentials(user.Login(), user.Password())
-	dto.Login = entity.Id()
-
-	body, errMarshaling := json.Marshal(dto)
-	if errMarshaling != nil {
-		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errMarshaling.Error()))
-		h.parent.Render(rw, resp)
-		return
-	}
-
-	resp.SetStatus(http.StatusOK).SetBody(body)
+	resp.SetStatus(http.StatusOK).SetBody([]byte(""))
 	h.parent.Render(rw, resp)
 	return
 }

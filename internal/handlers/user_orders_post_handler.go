@@ -6,14 +6,19 @@ import (
 
 	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/response"
+	"github.com/volkoviimagnit/gofermart/internal/security"
 )
 
 type UserOrdersPOSTHandler struct {
 	parent *AbstractHandler
+	auth   security.IAuthenticator
 }
 
-func NewUserOrderPOSTHandler() *UserOrdersPOSTHandler {
-	return &UserOrdersPOSTHandler{parent: NewAbstractHandler(http.MethodPost, "/api/user/orders")}
+func NewUserOrderPOSTHandler(auth security.IAuthenticator) *UserOrdersPOSTHandler {
+	return &UserOrdersPOSTHandler{
+		parent: NewAbstractHandler(http.MethodPost, "/api/user/orders"),
+		auth:   auth,
+	}
 }
 
 func (h *UserOrdersPOSTHandler) GetMethod() string {
@@ -34,6 +39,19 @@ func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, request *http.
 	// http.StatusInternalServerError
 
 	resp := response.NewResponse("text/plain")
+
+	passport, errAuth := h.auth.Authenticate(request)
+	if errAuth != nil {
+		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errAuth.Error()))
+		h.parent.Render(rw, resp)
+		return
+	}
+	if passport == nil {
+		resp.SetStatus(http.StatusUnauthorized).SetBody([]byte("пользователь не авторизован"))
+		h.parent.Render(rw, resp)
+		return
+	}
+
 	dto, errBody := h.extractRequestDTO(request)
 	if errBody != nil {
 		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errBody.Error()))

@@ -11,23 +11,29 @@ import (
 )
 
 type UserRepositoryMem struct {
-	users map[string]model.User
+	loginUsers map[string]model.User
+	// todo глупое хранилище юзеров по токенам
+	tokenUsers map[string]model.User
 }
 
 func NewUserRepositoryMem() IUserRepository {
-	return &UserRepositoryMem{users: map[string]model.User{}}
+	return &UserRepositoryMem{
+		loginUsers: map[string]model.User{},
+		tokenUsers: map[string]model.User{},
+	}
 }
 
 func (u *UserRepositoryMem) Insert(user model.User) error {
 	user.SetId(randStr(10))
-	u.users[user.Login()] = user
+	u.addLoginUser(user)
+	u.addTokenUser(user)
 	return nil
 }
 
 func (u *UserRepositoryMem) GetOneByCredentials(login string, password string) (*model.User, error) {
-	logrus.Debugf("UserRepositoryMem.users %+v", u.users)
+	logrus.Debugf("UserRepositoryMem.loginUsers %+v", u.loginUsers)
 
-	user, isExist := u.users[login]
+	user, isExist := u.loginUsers[login]
 	if !isExist {
 		return nil, errors.New("несуществующая пара логин/пароль")
 	}
@@ -37,9 +43,38 @@ func (u *UserRepositoryMem) GetOneByCredentials(login string, password string) (
 	return &user, nil
 }
 
+func (u *UserRepositoryMem) GetOneByLogin(login string) (*model.User, error) {
+	logrus.Debugf("UserRepositoryMem.loginUsers %+v", u.loginUsers)
+
+	user, isExist := u.loginUsers[login]
+	if !isExist {
+		return nil, nil
+	}
+	return &user, nil
+}
+
+func (u *UserRepositoryMem) GetOneByToken(token string) (*model.User, error) {
+	user, isExist := u.tokenUsers[token]
+	if !isExist {
+		return nil, nil
+	}
+	return &user, nil
+}
+
 func (u *UserRepositoryMem) Update(user model.User) error {
-	u.users[user.Login()] = user
+	u.addLoginUser(user)
+	u.addTokenUser(user)
 	return nil
+}
+
+func (u *UserRepositoryMem) addLoginUser(user model.User) {
+	u.loginUsers[user.Login()] = user
+}
+func (u *UserRepositoryMem) addTokenUser(user model.User) {
+	userToken := user.Token()
+	if len(userToken) > 0 {
+		u.tokenUsers[userToken] = user
+	}
 }
 
 func randStr(length int) string {
