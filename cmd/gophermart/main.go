@@ -31,16 +31,16 @@ func main() {
 	logrus.Debugf("params: %+v", params)
 
 	userRepository := repository.NewUserRepositoryMem()
+	userOrderRepository := repository.NewUserOrderRepositoryMem()
 	authenticator := security.NewAuthenticator(userRepository)
 
 	userRegisterHandler := handlers.NewUserRegisterHandler(userRepository)
 	userLoginHandler := handlers.NewUserLoginHandler(userRepository, authenticator)
-	userOrderPOSTHandler := handlers.NewUserOrderPOSTHandler(authenticator)
-	userOrderGETHandler := handlers.NewUserOrdersGETHandler()
+	userOrderPOSTHandler := handlers.NewUserOrderPOSTHandler(userOrderRepository, authenticator)
+	userOrderGETHandler := handlers.NewUserOrdersGETHandler(userOrderRepository, authenticator)
 	userBalanceHandler := handlers.NewUserBalanceHandler()
 	userBalanceWithdrawHandler := handlers.NewUserBalanceWithdrawHandler()
 	userWithdrawalsHandler := handlers.NewUserWithdrawalsHandler()
-	orderNumberHandler := handlers.NewOrderNumberHandler()
 
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
@@ -59,7 +59,6 @@ func main() {
 	router.Method(userBalanceHandler.GetMethod(), userBalanceHandler.GetPattern(), userBalanceHandler)
 	router.Method(userBalanceWithdrawHandler.GetMethod(), userBalanceWithdrawHandler.GetPattern(), userBalanceWithdrawHandler)
 	router.Method(userWithdrawalsHandler.GetMethod(), userWithdrawalsHandler.GetPattern(), userWithdrawalsHandler)
-	router.Method(orderNumberHandler.GetMethod(), orderNumberHandler.GetPattern(), orderNumberHandler)
 
 	listenShutDown()
 

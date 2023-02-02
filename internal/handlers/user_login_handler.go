@@ -18,7 +18,7 @@ type UserLoginHandler struct {
 
 func NewUserLoginHandler(userRepository repository.IUserRepository, auth security.IAuthenticator) IHandler {
 	return &UserLoginHandler{
-		parent:         NewAbstractHandler(http.MethodPost, "/api/user/login"),
+		parent:         NewAbstractHandler(http.MethodPost, "/api/user/login", "application/json"),
 		userRepository: userRepository,
 		auth:           auth,
 	}
@@ -55,7 +55,7 @@ func (h *UserLoginHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, errRepository := h.userRepository.GetOneByCredentials(dto.GetLogin(), dto.GetPassword())
+	user, errRepository := h.userRepository.FindOneByCredentials(dto.GetLogin(), dto.GetPassword())
 	if errRepository != nil || user == nil {
 		resp.SetStatus(http.StatusUnauthorized).SetBody([]byte(errRepository.Error()))
 		h.parent.Render(rw, resp)

@@ -15,7 +15,7 @@ type Authenticator struct {
 func (a Authenticator) Authenticate(request *http.Request) (IPassport, error) {
 	accessToken := request.Header.Get("Authorization")
 
-	user, errToking := a.userRepository.GetOneByToken(accessToken)
+	user, errToking := a.userRepository.FindOneByToken(accessToken)
 	if errToking != nil {
 		return nil, errors.New("не удалось проверить токен")
 	}

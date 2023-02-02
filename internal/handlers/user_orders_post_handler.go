@@ -2,22 +2,28 @@ package handlers
 
 import (
 	"io"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/response"
+	"github.com/volkoviimagnit/gofermart/internal/repository"
+	"github.com/volkoviimagnit/gofermart/internal/repository/model"
 	"github.com/volkoviimagnit/gofermart/internal/security"
 )
 
 type UserOrdersPOSTHandler struct {
-	parent *AbstractHandler
-	auth   security.IAuthenticator
+	parent              *AbstractHandler
+	userOrderRepository repository.IUserOrderRepository
 }
 
-func NewUserOrderPOSTHandler(auth security.IAuthenticator) *UserOrdersPOSTHandler {
+func NewUserOrderPOSTHandler(uoRepository repository.IUserOrderRepository, auth security.IAuthenticator) *UserOrdersPOSTHandler {
+	abstract := NewAbstractHandler(http.MethodPost, "/api/user/orders", "text/plain")
+	abstract.SetAuthenticator(auth)
 	return &UserOrdersPOSTHandler{
-		parent: NewAbstractHandler(http.MethodPost, "/api/user/orders"),
-		auth:   auth,
+		parent:              abstract,
+		userOrderRepository: uoRepository,
 	}
 }
 
@@ -37,25 +43,16 @@ func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, request *http.
 	//http.StatusConflict
 	//http.StatusUnprocessableEntity
 	// http.StatusInternalServerError
+	passport := h.parent.AuthOrAbort(rw, request)
+	if passport == nil {
+		return
+	}
 
 	resp := response.NewResponse("text/plain")
 
-	passport, errAuth := h.auth.Authenticate(request)
-	if errAuth != nil {
-		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errAuth.Error()))
-		h.parent.Render(rw, resp)
-		return
-	}
-	if passport == nil {
-		resp.SetStatus(http.StatusUnauthorized).SetBody([]byte("пользователь не авторизован"))
-		h.parent.Render(rw, resp)
-		return
-	}
-
 	dto, errBody := h.extractRequestDTO(request)
 	if errBody != nil {
-		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errBody.Error()))
-		h.parent.Render(rw, resp)
+		h.parent.RenderInternalServerError(rw, errBody)
 		return
 	}
 
@@ -63,6 +60,20 @@ func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, request *http.
 	if errValidation != nil {
 		resp.SetStatus(http.StatusBadRequest).SetBody([]byte(errValidation.Error()))
 		h.parent.Render(rw, resp)
+		return
+	}
+
+	m := model.UserOrder{}
+	m.SetNumber(dto.GetNumber())
+	m.SetUserId(passport.GetUser().Id())
+	m.SetUploadedAt(time.Now())
+	if rand.Int()%2 == 0 {
+		accrual := rand.Float64()
+		m.SetAccrual(&accrual)
+	}
+	errInserting := h.userOrderRepository.Insert(m)
+	if errInserting != nil {
+		h.parent.RenderInternalServerError(rw, errInserting)
 		return
 	}
 

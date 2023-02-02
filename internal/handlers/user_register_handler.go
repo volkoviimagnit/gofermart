@@ -17,7 +17,7 @@ type UserRegisterHandler struct {
 
 func NewUserRegisterHandler(repository repository.IUserRepository) IHandler {
 	return &UserRegisterHandler{
-		parent:         NewAbstractHandler(http.MethodPost, "/api/user/register"),
+		parent:         NewAbstractHandler(http.MethodPost, "/api/user/register", "application/json"),
 		userRepository: repository,
 	}
 }
@@ -52,7 +52,7 @@ func (h *UserRegisterHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	user, errConflict := h.userRepository.GetOneByLogin(dto.GetLogin())
+	user, errConflict := h.userRepository.FindOneByLogin(dto.GetLogin())
 	if errConflict != nil {
 		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errConflict.Error()))
 		h.parent.Render(rw, resp)

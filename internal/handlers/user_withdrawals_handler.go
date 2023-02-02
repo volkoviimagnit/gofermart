@@ -8,7 +8,7 @@ type UserWithdrawalsHandler struct {
 
 func NewUserWithdrawalsHandler() *UserWithdrawalsHandler {
 	return &UserWithdrawalsHandler{
-		parent: NewAbstractHandler(http.MethodGet, "/api/user/withdrawals"),
+		parent: NewAbstractHandler(http.MethodGet, "/api/user/withdrawals", "application/json"),
 	}
 }
 

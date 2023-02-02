@@ -8,7 +8,7 @@ type UserBalanceWithdrawHandler struct {
 
 func NewUserBalanceWithdrawHandler() *UserBalanceWithdrawHandler {
 	return &UserBalanceWithdrawHandler{
-		parent: NewAbstractHandler(http.MethodPost, "/api/user/balance/withdraw"),
+		parent: NewAbstractHandler(http.MethodPost, "/api/user/balance/withdraw", "application/json"),
 	}
 }
 

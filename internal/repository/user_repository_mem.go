@@ -30,7 +30,7 @@ func (u *UserRepositoryMem) Insert(user model.User) error {
 	return nil
 }
 
-func (u *UserRepositoryMem) GetOneByCredentials(login string, password string) (*model.User, error) {
+func (u *UserRepositoryMem) FindOneByCredentials(login string, password string) (*model.User, error) {
 	logrus.Debugf("UserRepositoryMem.loginUsers %+v", u.loginUsers)
 
 	user, isExist := u.loginUsers[login]
@@ -43,7 +43,7 @@ func (u *UserRepositoryMem) GetOneByCredentials(login string, password string) (
 	return &user, nil
 }
 
-func (u *UserRepositoryMem) GetOneByLogin(login string) (*model.User, error) {
+func (u *UserRepositoryMem) FindOneByLogin(login string) (*model.User, error) {
 	logrus.Debugf("UserRepositoryMem.loginUsers %+v", u.loginUsers)
 
 	user, isExist := u.loginUsers[login]
@@ -53,7 +53,7 @@ func (u *UserRepositoryMem) GetOneByLogin(login string) (*model.User, error) {
 	return &user, nil
 }
 
-func (u *UserRepositoryMem) GetOneByToken(token string) (*model.User, error) {
+func (u *UserRepositoryMem) FindOneByToken(token string) (*model.User, error) {
 	user, isExist := u.tokenUsers[token]
 	if !isExist {
 		return nil, nil

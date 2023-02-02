@@ -8,7 +8,7 @@ type UserBalanceHandler struct {
 
 func NewUserBalanceHandler() *UserBalanceHandler {
 	return &UserBalanceHandler{
-		parent: NewAbstractHandler(http.MethodGet, "/api/user/balance"),
+		parent: NewAbstractHandler(http.MethodGet, "/api/user/balance", "application/json"),
 	}
 }
 
