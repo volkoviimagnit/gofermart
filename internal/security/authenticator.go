@@ -2,9 +2,9 @@ package security
 
 import (
 	"errors"
-	"math/rand"
 	"net/http"
 
+	"github.com/volkoviimagnit/gofermart/internal/helpers"
 	"github.com/volkoviimagnit/gofermart/internal/repository"
 )
 
@@ -28,16 +28,7 @@ func (a Authenticator) Authenticate(request *http.Request) (IPassport, error) {
 }
 
 func (a Authenticator) CreateAuthenticatedToken() string {
-	return a.randomString(10)
-}
-
-func (a Authenticator) randomString(n int) string {
-	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
-	}
-	return string(b)
+	return helpers.RandomString(10)
 }
 
 func (a Authenticator) GetUserRepository() repository.IUserRepository {

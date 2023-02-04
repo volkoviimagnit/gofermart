@@ -5,15 +5,13 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
 	"github.com/volkoviimagnit/gofermart/internal/config"
 	"github.com/volkoviimagnit/gofermart/internal/handlers"
 	"github.com/volkoviimagnit/gofermart/internal/repository"
 	"github.com/volkoviimagnit/gofermart/internal/security"
+	"github.com/volkoviimagnit/gofermart/internal/server"
 	"github.com/volkoviimagnit/gofermart/internal/service"
 )
 
@@ -51,27 +49,25 @@ func main() {
 	userBalanceWithdrawHandler := handlers.NewUserBalanceWithdrawHandler(userBalanceService, authenticator)
 	userWithdrawalsHandler := handlers.NewUserWithdrawalsHandler(userBalanceWithdrawRepository, authenticator)
 
-	router := chi.NewRouter()
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	if params.IsDebugMode() {
-		router.Use(middleware.Logger)
-	}
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.StripSlashes)
-	router.Use(middleware.Timeout(60 * time.Second))
+	handlerCollection := server.NewHandlerCollection()
+	handlerCollection.
+		AddHandler(userRegisterHandler).
+		AddHandler(userLoginHandler).
+		AddHandler(userOrderPOSTHandler).
+		AddHandler(userOrderGETHandler).
+		AddHandler(userBalanceHandler).
+		AddHandler(userBalanceWithdrawHandler).
+		AddHandler(userWithdrawalsHandler)
 
-	router.Method(userRegisterHandler.GetMethod(), userRegisterHandler.GetPattern(), userRegisterHandler)
-	router.Method(userLoginHandler.GetMethod(), userLoginHandler.GetPattern(), userLoginHandler)
-	router.Method(userOrderPOSTHandler.GetMethod(), userOrderPOSTHandler.GetPattern(), userOrderPOSTHandler)
-	router.Method(userOrderGETHandler.GetMethod(), userOrderGETHandler.GetPattern(), userOrderGETHandler)
-	router.Method(userBalanceHandler.GetMethod(), userBalanceHandler.GetPattern(), userBalanceHandler)
-	router.Method(userBalanceWithdrawHandler.GetMethod(), userBalanceWithdrawHandler.GetPattern(), userBalanceWithdrawHandler)
-	router.Method(userWithdrawalsHandler.GetMethod(), userWithdrawalsHandler.GetPattern(), userWithdrawalsHandler)
+	router := server.NewRouterChi(handlerCollection, params.IsDebugMode())
+	err := router.Configure()
+	if err != nil {
+		logrus.Fatal("не удалось сконфигурировать роутер")
+	}
 
 	listenShutDown()
 
-	logrus.Fatal(http.ListenAndServe(params.GetRunAddress(), router))
+	logrus.Fatal(http.ListenAndServe(params.GetRunAddress(), router.GetHandler()))
 }
 
 func listenShutDown() {

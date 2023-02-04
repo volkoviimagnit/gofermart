@@ -15,7 +15,7 @@ type UserRegisterHandler struct {
 	userRepository repository.IUserRepository
 }
 
-func NewUserRegisterHandler(repository repository.IUserRepository) IHandler {
+func NewUserRegisterHandler(repository repository.IUserRepository) *UserRegisterHandler {
 	return &UserRegisterHandler{
 		parent:         NewAbstractHandler(http.MethodPost, "/api/user/register", "application/json"),
 		userRepository: repository,

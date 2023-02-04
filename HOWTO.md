@@ -79,4 +79,7 @@ go get github.com/caarlos0/env/v6
 https://github.com/go-chi/chi
 go get -u github.com/go-chi/chi/v5
 
+https://github.com/stretchr/testify
+go get -u github.com/stretchr/testify
+
 go build -o main && chmod +x main && LOG_LEVEL=trace DATABASE_URI=databaseEnv RUN_ADDRESS=runEnv ACCRUAL_SYSTEM_ADDRESS=accEnv ./main -a=localhostArg -d=databaseArg -r=accrualArg -ll=debug

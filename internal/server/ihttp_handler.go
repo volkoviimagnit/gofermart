@@ -1,8 +1,8 @@
-package handlers
+package server
 
 import "net/http"
 
-type IHandler interface {
+type IHttpHandler interface {
 	GetMethod() string
 	GetPattern() string
 	ServeHTTP(http.ResponseWriter, *http.Request)

@@ -16,7 +16,7 @@ type UserLoginHandler struct {
 	auth           security.IAuthenticator
 }
 
-func NewUserLoginHandler(userRepository repository.IUserRepository, auth security.IAuthenticator) IHandler {
+func NewUserLoginHandler(userRepository repository.IUserRepository, auth security.IAuthenticator) *UserLoginHandler {
 	return &UserLoginHandler{
 		parent:         NewAbstractHandler(http.MethodPost, "/api/user/login", "application/json"),
 		userRepository: userRepository,
@@ -78,6 +78,7 @@ func (h *UserLoginHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO передать токен через заголовок Authorization
 	resp.SetStatus(http.StatusOK).SetBody(body)
 	h.parent.Render(rw, resp)
 	return
