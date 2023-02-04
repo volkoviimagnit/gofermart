@@ -14,6 +14,7 @@ import (
 	"github.com/volkoviimagnit/gofermart/internal/handlers"
 	"github.com/volkoviimagnit/gofermart/internal/repository"
 	"github.com/volkoviimagnit/gofermart/internal/security"
+	"github.com/volkoviimagnit/gofermart/internal/service"
 )
 
 func main() {
@@ -32,15 +33,23 @@ func main() {
 
 	userRepository := repository.NewUserRepositoryMem()
 	userOrderRepository := repository.NewUserOrderRepositoryMem()
+	userBalanceRepository := repository.NewUserBalanceRepositoryMem()
+	userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
+
 	authenticator := security.NewAuthenticator(userRepository)
+
+	userBalanceService := service.NewUserBalanceService(
+		userBalanceRepository,
+		userBalanceWithdrawRepository,
+	)
 
 	userRegisterHandler := handlers.NewUserRegisterHandler(userRepository)
 	userLoginHandler := handlers.NewUserLoginHandler(userRepository, authenticator)
 	userOrderPOSTHandler := handlers.NewUserOrderPOSTHandler(userOrderRepository, authenticator)
 	userOrderGETHandler := handlers.NewUserOrdersGETHandler(userOrderRepository, authenticator)
 	userBalanceHandler := handlers.NewUserBalanceHandler()
-	userBalanceWithdrawHandler := handlers.NewUserBalanceWithdrawHandler()
-	userWithdrawalsHandler := handlers.NewUserWithdrawalsHandler()
+	userBalanceWithdrawHandler := handlers.NewUserBalanceWithdrawHandler(userBalanceService, authenticator)
+	userWithdrawalsHandler := handlers.NewUserWithdrawalsHandler(userBalanceWithdrawRepository, authenticator)
 
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
@@ -66,7 +75,7 @@ func main() {
 }
 
 func listenShutDown() {
-	c := make(chan os.Signal, 0)
+	c := make(chan os.Signal)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
 	go func() {

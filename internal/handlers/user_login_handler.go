@@ -57,8 +57,7 @@ func (h *UserLoginHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	user, errRepository := h.userRepository.FindOneByCredentials(dto.GetLogin(), dto.GetPassword())
 	if errRepository != nil || user == nil {
-		resp.SetStatus(http.StatusUnauthorized).SetBody([]byte(errRepository.Error()))
-		h.parent.Render(rw, resp)
+		h.parent.RenderUnauthorized(rw)
 		return
 	}
 

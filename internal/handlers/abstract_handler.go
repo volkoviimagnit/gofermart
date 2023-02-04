@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -53,17 +54,26 @@ func (h *AbstractHandler) RenderUnauthorized(rw http.ResponseWriter) {
 	resp := response.NewResponse(h.contentType)
 	resp.SetStatus(http.StatusUnauthorized).SetBody([]byte("пользователь не авторизован"))
 	h.Render(rw, resp)
-	return
 }
 
 func (h *AbstractHandler) RenderInternalServerError(rw http.ResponseWriter, err error) {
 	resp := response.NewResponse(h.contentType)
 	resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(err.Error()))
 	h.Render(rw, resp)
-	return
+}
+
+func (h *AbstractHandler) RenderError(rw http.ResponseWriter, status int, err error) {
+	resp := response.NewResponse(h.contentType)
+	resp.SetStatus(status).SetBody([]byte(err.Error()))
+	h.Render(rw, resp)
 }
 
 func (h *AbstractHandler) AuthOrAbort(rw http.ResponseWriter, request *http.Request) security.IPassport {
+	if h.auth == nil {
+		h.RenderInternalServerError(rw, errors.New("способ аутентификации не задан"))
+		return nil
+	}
+
 	passport, errAuth := h.auth.Authenticate(request)
 	if errAuth != nil {
 		h.RenderInternalServerError(rw, errAuth)
@@ -84,5 +94,4 @@ func (h *AbstractHandler) RenderNoContent(rw http.ResponseWriter) {
 	resp := response.NewResponse(h.contentType)
 	resp.SetStatus(http.StatusNoContent).SetBody([]byte(""))
 	h.Render(rw, resp)
-	return
 }
