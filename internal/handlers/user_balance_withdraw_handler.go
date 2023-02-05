@@ -24,6 +24,10 @@ func NewUserBalanceWithdrawHandler(ubService service.IUserBalanceService, auth s
 	}
 }
 
+func (h *UserBalanceWithdrawHandler) GetContentType() string {
+	return h.parent.contentType
+}
+
 func (h *UserBalanceWithdrawHandler) GetMethod() string {
 	return h.parent.GetMethod()
 }

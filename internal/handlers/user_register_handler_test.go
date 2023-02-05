@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -10,87 +9,69 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
+	"github.com/volkoviimagnit/gofermart/internal/handlers/test"
 	"github.com/volkoviimagnit/gofermart/internal/helpers"
 	"github.com/volkoviimagnit/gofermart/internal/repository"
 	"github.com/volkoviimagnit/gofermart/internal/server"
 )
 
 func TestUserRegisterHandler_ServeHTTP(t *testing.T) {
-
-	type Expected struct {
-		Status int
-	}
-
-	type Request struct {
-		dto         request.UserDTO
-		contentType string
-	}
-
 	randomLogin := helpers.RandomString(10)
 	randomPassword := helpers.RandomString(10)
-	tests := []struct {
-		name     string
-		request  Request
-		expected Expected
-	}{
+	tests := []UserTestCase{
 		{
 			name: "Корректная регистрация - 200",
-			request: Request{
-				contentType: "application/json",
-				dto: request.UserDTO{
+			request: test.UserRequest{
+				DTO: request.UserDTO{
 					Login:    randomLogin,
 					Password: randomPassword,
 				},
 			},
-			expected: Expected{
-				Status: http.StatusOK,
+			expected: test.Expected{
+				StatusCode: http.StatusOK,
 			},
 		},
 		{
 			name: "Без логина - 400",
-			request: Request{
-				contentType: "application/json",
-				dto: request.UserDTO{
+			request: test.UserRequest{
+				DTO: request.UserDTO{
 					Password: helpers.RandomString(10),
 				},
 			},
-			expected: Expected{
-				Status: http.StatusBadRequest,
+			expected: test.Expected{
+				StatusCode: http.StatusBadRequest,
 			},
 		},
 		{
 			name: "Без пароля - 400",
-			request: Request{
-				contentType: "application/json",
-				dto: request.UserDTO{
+			request: test.UserRequest{
+				DTO: request.UserDTO{
 					Login: helpers.RandomString(10),
 				},
 			},
-			expected: Expected{
-				Status: http.StatusBadRequest,
+			expected: test.Expected{
+				StatusCode: http.StatusBadRequest,
 			},
 		},
 		{
 			name: "Без тела - 400",
-			request: Request{
-				contentType: "application/json",
-				dto:         request.UserDTO{},
+			request: test.UserRequest{
+				DTO: request.UserDTO{},
 			},
-			expected: Expected{
-				Status: http.StatusBadRequest,
+			expected: test.Expected{
+				StatusCode: http.StatusBadRequest,
 			},
 		},
 		{
 			name: "Повторная регистрация - 409",
-			request: Request{
-				contentType: "application/json",
-				dto: request.UserDTO{
+			request: test.UserRequest{
+				DTO: request.UserDTO{
 					Login:    randomLogin,
 					Password: randomPassword,
 				},
 			},
-			expected: Expected{
-				Status: http.StatusConflict,
+			expected: test.Expected{
+				StatusCode: http.StatusConflict,
 			},
 		},
 	}
@@ -103,19 +84,16 @@ func TestUserRegisterHandler_ServeHTTP(t *testing.T) {
 	router := server.NewRouterChi(handlerCollection, true)
 	ts := httptest.NewServer(router.GetHandler())
 
+	testEnvironment := NewTestEnvironment()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			body, errMarshaling := json.Marshal(tt.request.dto)
+			body, errMarshaling := json.Marshal(tt.request.DTO)
 			require.NoError(t, errMarshaling)
-
-			testRequest, errRequest := http.NewRequest(userRegisterHandler.GetMethod(), ts.URL+"/api/user/register", bytes.NewBuffer(body))
-			testRequest.Header.Set("Content-Type", tt.request.contentType)
-			require.NoError(t, errRequest)
-
-			testWriter := httptest.NewRecorder()
-			userRegisterHandler.ServeHTTP(testWriter, testRequest)
-
-			assert.Equal(t, tt.expected.Status, testWriter.Result().StatusCode)
+			registerResponse := testEnvironment.ServeHandler(t, testEnvironment.userRegisterHandler, body)
+			assert.Equal(t, tt.expected.StatusCode, registerResponse.StatusCode)
+			errClosing := registerResponse.Body.Close()
+			assert.NoError(t, errClosing)
 		})
 	}
 	defer ts.Close()

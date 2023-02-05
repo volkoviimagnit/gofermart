@@ -8,11 +8,11 @@ import (
 	"github.com/volkoviimagnit/gofermart/internal/repository"
 )
 
-type Authenticator struct {
+type AuthenticatorHeader struct {
 	userRepository repository.IUserRepository
 }
 
-func (a Authenticator) Authenticate(request *http.Request) (IPassport, error) {
+func (a *AuthenticatorHeader) Authenticate(request *http.Request) (IPassport, error) {
 	accessToken := request.Header.Get("Authorization")
 
 	user, errToking := a.userRepository.FindOneByToken(accessToken)
@@ -27,17 +27,21 @@ func (a Authenticator) Authenticate(request *http.Request) (IPassport, error) {
 
 }
 
-func (a Authenticator) CreateAuthenticatedToken() string {
+func (a *AuthenticatorHeader) CreateAuthenticatedToken() string {
 	return helpers.RandomString(10)
 }
 
-func (a Authenticator) GetUserRepository() repository.IUserRepository {
+func (a *AuthenticatorHeader) GetUserRepository() repository.IUserRepository {
 	//TODO implement me
 	panic("implement me")
 }
 
-func NewAuthenticator(userRepository repository.IUserRepository) *Authenticator {
-	return &Authenticator{
+func (a *AuthenticatorHeader) SetAuthenticatedToken(rw http.ResponseWriter, token string) {
+	rw.Header().Set("Authorization", token)
+}
+
+func NewAuthenticator(userRepository repository.IUserRepository) *AuthenticatorHeader {
+	return &AuthenticatorHeader{
 		userRepository: userRepository,
 	}
 }

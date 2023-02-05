@@ -22,6 +22,10 @@ func NewUserRegisterHandler(repository repository.IUserRepository) *UserRegister
 	}
 }
 
+func (h *UserRegisterHandler) GetContentType() string {
+	return h.parent.contentType
+}
+
 func (h *UserRegisterHandler) GetMethod() string {
 	return h.parent.GetMethod()
 }

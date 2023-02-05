@@ -12,6 +12,10 @@ func NewUserBalanceHandler() *UserBalanceHandler {
 	}
 }
 
+func (h *UserBalanceHandler) GetContentType() string {
+	return h.parent.contentType
+}
+
 func (h *UserBalanceHandler) GetMethod() string {
 	return h.parent.GetMethod()
 }

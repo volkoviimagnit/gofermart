@@ -24,6 +24,10 @@ func NewUserWithdrawalsHandler(ubwRepository repository.IUserBalanceWithdrawRepo
 	}
 }
 
+func (h *UserWithdrawalsHandler) GetContentType() string {
+	return h.parent.contentType
+}
+
 func (h *UserWithdrawalsHandler) GetMethod() string {
 	return h.parent.GetMethod()
 }

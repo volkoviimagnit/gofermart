@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -33,7 +32,6 @@ func (r *RouterChi) Configure() error {
 	r.mux.Use(middleware.StripSlashes)
 	r.mux.Use(middleware.Timeout(60 * time.Second))
 
-	fmt.Printf("handlers %d", len(r.handlerCollection.GetHandlers()))
 	for _, handler := range r.handlerCollection.GetHandlers() {
 		r.mux.Method(handler.GetMethod(), handler.GetPattern(), handler)
 	}

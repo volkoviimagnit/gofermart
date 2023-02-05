@@ -27,6 +27,10 @@ func NewUserOrderPOSTHandler(uoRepository repository.IUserOrderRepository, auth 
 	}
 }
 
+func (h *UserOrdersPOSTHandler) GetContentType() string {
+	return h.parent.contentType
+}
+
 func (h *UserOrdersPOSTHandler) GetMethod() string {
 	return h.parent.GetMethod()
 }

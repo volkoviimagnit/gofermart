@@ -24,6 +24,10 @@ func NewUserLoginHandler(userRepository repository.IUserRepository, auth securit
 	}
 }
 
+func (h *UserLoginHandler) GetContentType() string {
+	return h.parent.contentType
+}
+
 func (h *UserLoginHandler) GetMethod() string {
 	return h.parent.GetMethod()
 }
@@ -80,7 +84,9 @@ func (h *UserLoginHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	// TODO передать токен через заголовок Authorization
 	resp.SetStatus(http.StatusOK).SetBody(body)
+	h.auth.SetAuthenticatedToken(rw, accessToken)
 	h.parent.Render(rw, resp)
+
 	return
 }
 
