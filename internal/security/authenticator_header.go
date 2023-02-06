@@ -28,7 +28,7 @@ func (a *AuthenticatorHeader) Authenticate(request *http.Request) (IPassport, er
 }
 
 func (a *AuthenticatorHeader) CreateAuthenticatedToken() string {
-	return helpers.RandomString(10)
+	return helpers.RandomOrderNumber()
 }
 
 func (a *AuthenticatorHeader) GetUserRepository() repository.IUserRepository {
@@ -36,8 +36,12 @@ func (a *AuthenticatorHeader) GetUserRepository() repository.IUserRepository {
 	panic("implement me")
 }
 
-func (a *AuthenticatorHeader) SetAuthenticatedToken(rw http.ResponseWriter, token string) {
+func (a *AuthenticatorHeader) RenderAuthenticatedToken(rw http.ResponseWriter, token string) {
 	rw.Header().Set("Authorization", token)
+}
+
+func (a *AuthenticatorHeader) SetAuthenticatedToken(r *http.Request, token string) {
+	r.Header.Set("Authorization", token)
 }
 
 func NewAuthenticator(userRepository repository.IUserRepository) *AuthenticatorHeader {

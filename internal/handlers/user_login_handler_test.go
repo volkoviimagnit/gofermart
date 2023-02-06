@@ -24,7 +24,7 @@ func TestUserLoginHandler_ServeHTTP_Negative(t *testing.T) {
 			body, errMarshaling := json.Marshal(tt.request.DTO)
 			require.NoError(t, errMarshaling)
 
-			response := testEnvironment.ServeHandler(t, testEnvironment.userLoginHandler, body)
+			response := testEnvironment.ServeHandler(testEnvironment.userLoginHandler, body)
 			assert.Equal(t, tt.expected.StatusCode, response.StatusCode)
 
 			errClosing := response.Body.Close()

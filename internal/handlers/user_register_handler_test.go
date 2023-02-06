@@ -90,7 +90,7 @@ func TestUserRegisterHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			body, errMarshaling := json.Marshal(tt.request.DTO)
 			require.NoError(t, errMarshaling)
-			registerResponse := testEnvironment.ServeHandler(t, testEnvironment.userRegisterHandler, body)
+			registerResponse := testEnvironment.ServeHandler(testEnvironment.userRegisterHandler, body)
 			assert.Equal(t, tt.expected.StatusCode, registerResponse.StatusCode)
 			errClosing := registerResponse.Body.Close()
 			assert.NoError(t, errClosing)

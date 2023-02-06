@@ -84,7 +84,7 @@ func (h *UserLoginHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	// TODO передать токен через заголовок Authorization
 	resp.SetStatus(http.StatusOK).SetBody(body)
-	h.auth.SetAuthenticatedToken(rw, accessToken)
+	h.auth.RenderAuthenticatedToken(rw, accessToken)
 	h.parent.Render(rw, resp)
 
 	return

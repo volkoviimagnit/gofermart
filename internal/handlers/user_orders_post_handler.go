@@ -39,7 +39,7 @@ func (h *UserOrdersPOSTHandler) GetPattern() string {
 	return h.parent.GetPattern()
 }
 
-func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, request *http.Request) {
+func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// http.StatusOK
 	//http.StatusAccepted
 	//http.StatusBadRequest
@@ -47,24 +47,48 @@ func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, request *http.
 	//http.StatusConflict
 	//http.StatusUnprocessableEntity
 	// http.StatusInternalServerError
-	passport := h.parent.AuthOrAbort(rw, request)
+	passport := h.parent.AuthOrAbort(rw, r)
 	if passport == nil {
 		return
 	}
 
 	resp := response.NewResponse("text/plain")
 
-	dto, errBody := h.extractRequestDTO(request)
+	dto, errBody := h.extractRequestDTO(r)
 	if errBody != nil {
 		h.parent.RenderInternalServerError(rw, errBody)
 		return
 	}
 
+	var errStatusCode int
 	errValidation := dto.Validate()
 	if errValidation != nil {
-		resp.SetStatus(http.StatusBadRequest).SetBody([]byte(errValidation.Error()))
-		h.parent.Render(rw, resp)
+		switch errValidation.(type) {
+		case *request.NumberFormatError:
+			errStatusCode = http.StatusUnprocessableEntity
+		case *request.NumberError:
+			errStatusCode = http.StatusBadRequest
+		}
+	}
+	if errValidation != nil {
+		h.parent.RenderResponse(rw, errStatusCode, []byte(errValidation.Error()))
 		return
+	}
+
+	oldOrder, errDuplicated := h.userOrderRepository.FindOneByNumber(dto.GetNumber())
+	if errDuplicated != nil {
+		h.parent.RenderInternalServerError(rw, errDuplicated)
+		return
+	}
+	if oldOrder != nil {
+		isOwnOrder := oldOrder.UserId() == passport.GetUser().Id()
+		if isOwnOrder {
+			h.parent.RenderResponse(rw, http.StatusOK, []byte(""))
+			return
+		} else {
+			h.parent.RenderResponse(rw, http.StatusConflict, []byte(""))
+			return
+		}
 	}
 
 	m := model.UserOrder{}

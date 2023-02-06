@@ -34,7 +34,7 @@ func (h *AbstractHandler) Render(rw http.ResponseWriter, resp *response.Response
 }
 
 func (h *AbstractHandler) RenderResponse(rw http.ResponseWriter, statusCode int, body []byte) {
-	rw.Header().Set("Content-Type", "application/json")
+	rw.Header().Set("Content-Type", h.contentType)
 	rw.WriteHeader(statusCode)
 	_, err := rw.Write(body)
 	if err != nil {

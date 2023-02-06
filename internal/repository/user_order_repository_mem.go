@@ -3,18 +3,18 @@ package repository
 import "github.com/volkoviimagnit/gofermart/internal/repository/model"
 
 type UserOrderRepositoryMem struct {
-	userOrders map[string][]model.UserOrder
+	userOrders map[string]map[string]model.UserOrder
 }
 
 func NewUserOrderRepositoryMem() IUserOrderRepository {
-	return &UserOrderRepositoryMem{userOrders: make(map[string][]model.UserOrder, 0)}
+	return &UserOrderRepositoryMem{userOrders: make(map[string]map[string]model.UserOrder, 0)}
 }
 
 func (r *UserOrderRepositoryMem) Insert(row model.UserOrder) error {
 	if _, isExist := r.userOrders[row.UserId()]; !isExist {
-		r.userOrders[row.UserId()] = make([]model.UserOrder, 0)
+		r.userOrders[row.UserId()] = make(map[string]model.UserOrder, 0)
 	}
-	r.userOrders[row.UserId()] = append(r.userOrders[row.UserId()], row)
+	r.userOrders[row.UserId()][row.Number()] = row
 	return nil
 }
 
@@ -22,5 +22,33 @@ func (r *UserOrderRepositoryMem) FindByUserId(userId string) ([]model.UserOrder,
 	if _, isExist := r.userOrders[userId]; !isExist {
 		return make([]model.UserOrder, 0), nil
 	}
-	return r.userOrders[userId], nil
+	if len(r.userOrders[userId]) == 0 {
+		return make([]model.UserOrder, 0), nil
+	}
+	userOrders := make([]model.UserOrder, 0, len(r.userOrders[userId]))
+	for _, userOrder := range r.userOrders[userId] {
+		userOrders = append(userOrders, userOrder)
+	}
+	return userOrders, nil
+}
+
+func (r *UserOrderRepositoryMem) FindOneByNumber(number string) (*model.UserOrder, error) {
+	for _, orders := range r.userOrders {
+		for _, order := range orders {
+			if order.Number() == number {
+				return &order, nil
+			}
+		}
+	}
+	return nil, nil
+}
+
+func (r *UserOrderRepositoryMem) IsExist(userId string, number string) (bool, error) {
+	if _, isExist := r.userOrders[userId]; !isExist {
+		return false, nil
+	}
+	if _, isExist := r.userOrders[userId][number]; !isExist {
+		return false, nil
+	}
+	return true, nil
 }

@@ -1,8 +1,9 @@
 package request
 
 import (
-	"errors"
 	"strings"
+
+	"github.com/ShiraazMoollatjie/goluhn"
 )
 
 type UserOrdersPOSTDTO struct {
@@ -19,8 +20,31 @@ func (dto *UserOrdersPOSTDTO) GetNumber() string {
 
 func (dto *UserOrdersPOSTDTO) Validate() error {
 	if len(dto.GetNumber()) == 0 {
-		return errors.New("номер заказа является обязательным")
+		return &NumberError{}
+	}
+	errLuhn := goluhn.Validate(dto.GetNumber())
+	if errLuhn != nil {
+		return &NumberFormatError{errText: errLuhn.Error()}
 	}
 	// todo добавить проверку только на цифры
 	return nil
+}
+
+func (dto *UserOrdersPOSTDTO) Serialize() ([]byte, error) {
+	return []byte(dto.number), nil
+}
+
+type NumberFormatError struct {
+	errText string
+}
+
+func (e *NumberFormatError) Error() string {
+	return e.errText
+}
+
+type NumberError struct {
+}
+
+func (e *NumberError) Error() string {
+	return "неверный формат запроса"
 }

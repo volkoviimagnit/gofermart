@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -42,7 +43,7 @@ func (env *TestEnvironment) CreateAndAuthorizeRandomUser(t *testing.T) string {
 	})
 	require.NoError(t, errMarshaling)
 
-	response := env.ServeHandler(t, env.userLoginHandler, body)
+	response := env.ServeHandler(env.userLoginHandler, body)
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 
 	errClosing := response.Body.Close()
@@ -65,7 +66,7 @@ func (env *TestEnvironment) CreateRandomUser(t *testing.T) (string, string) {
 	})
 	require.NoError(t, errMarshaling)
 
-	registerResponse := env.ServeHandler(t, env.userRegisterHandler, body)
+	registerResponse := env.ServeHandler(env.userRegisterHandler, body)
 	assert.Equal(t, http.StatusOK, registerResponse.StatusCode)
 
 	errRegisterClosing := registerResponse.Body.Close()
@@ -73,20 +74,48 @@ func (env *TestEnvironment) CreateRandomUser(t *testing.T) (string, string) {
 	return randomLogin, randomPassword
 }
 
-func (env *TestEnvironment) ServeHandler(t *testing.T, handler server.IHttpHandler, body []byte) *http.Response {
+func (env *TestEnvironment) CreateUserOrders(accessToken string, count int) ([]*request.UserOrdersPOSTDTO, error) {
+	DTOs := make([]*request.UserOrdersPOSTDTO, 0, count)
+	for i := 0; i < count; i++ {
+		DTO := request.NewUserOrdersPOSTDTO(helpers.RandomOrderNumber())
+		DTOs = append(DTOs, DTO)
 
+		body, errSerializing := DTO.Serialize()
+		if errSerializing != nil {
+			return nil, errSerializing
+		}
+
+		response := env.ServeHandler(env.userOrderPOSTHandler, body, accessToken)
+		if response.StatusCode != http.StatusAccepted {
+			return nil, errors.New("не удалось создать заказ")
+		}
+	}
+	return DTOs, nil
+}
+
+func (env *TestEnvironment) ServeHandler(handler server.IHttpHandler, body []byte, accessToken ...string) *http.Response {
 	buffer := bytes.NewBuffer(body)
 	testRequest, errRequest := http.NewRequest(handler.GetMethod(), env.testServer.URL+handler.GetPattern(), buffer)
 	testRequest.Header.Set("Content-Type", handler.GetContentType())
-	require.NoError(t, errRequest)
+	if len(accessToken) > 0 {
+		token := accessToken[0]
+		env.authenticator.SetAuthenticatedToken(testRequest, token)
+	}
+	// TODO добавить обработку ошибок
+	if errRequest != nil {
+		return nil
+	}
 
 	testWriter := httptest.NewRecorder()
 	handler.ServeHTTP(testWriter, testRequest)
 
 	httpResponse := testWriter.Result()
+
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
-		assert.NoError(t, err)
+		if err != nil {
+			panic(err)
+		}
 	}(httpResponse.Body)
 
 	return httpResponse
