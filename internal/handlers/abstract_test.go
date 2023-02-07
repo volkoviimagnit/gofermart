@@ -31,6 +31,7 @@ type TestEnvironment struct {
 	userRegisterHandler  *UserRegisterHandler
 	userLoginHandler     *UserLoginHandler
 	userOrderPOSTHandler *UserOrdersPOSTHandler
+	userOrderGETHandler  *UserOrdersGETHandler
 	testServer           *httptest.Server
 }
 
@@ -160,6 +161,7 @@ func NewTestEnvironment() *TestEnvironment {
 		userRegisterHandler:  userRegisterHandler,
 		userLoginHandler:     userLoginHandler,
 		userOrderPOSTHandler: userOrderPOSTHandler,
+		userOrderGETHandler:  userOrderGETHandler,
 		testServer:           ts,
 	}
 }

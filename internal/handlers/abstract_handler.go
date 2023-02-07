@@ -52,7 +52,7 @@ func (h *AbstractHandler) GetPattern() string {
 
 func (h *AbstractHandler) RenderUnauthorized(rw http.ResponseWriter) {
 	resp := response.NewResponse(h.contentType)
-	resp.SetStatus(http.StatusUnauthorized).SetBody([]byte("пользователь не авторизован"))
+	resp.SetStatus(http.StatusUnauthorized).SetBody([]byte(""))
 	h.Render(rw, resp)
 }
 
