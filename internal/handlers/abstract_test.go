@@ -32,6 +32,7 @@ type TestEnvironment struct {
 	userLoginHandler     *UserLoginHandler
 	userOrderPOSTHandler *UserOrdersPOSTHandler
 	userOrderGETHandler  *UserOrdersGETHandler
+	userBalanceHandler   *UserBalanceHandler
 	testServer           *httptest.Server
 }
 
@@ -139,7 +140,7 @@ func NewTestEnvironment() *TestEnvironment {
 	userLoginHandler := NewUserLoginHandler(userRepository, authenticator)
 	userOrderPOSTHandler := NewUserOrderPOSTHandler(userOrderRepository, authenticator)
 	userOrderGETHandler := NewUserOrdersGETHandler(userOrderRepository, authenticator)
-	userBalanceHandler := NewUserBalanceHandler()
+	userBalanceHandler := NewUserBalanceHandler(userBalanceService, authenticator)
 	userBalanceWithdrawHandler := NewUserBalanceWithdrawHandler(userBalanceService, authenticator)
 	userWithdrawalsHandler := NewUserWithdrawalsHandler(userBalanceWithdrawRepository, authenticator)
 
@@ -162,6 +163,7 @@ func NewTestEnvironment() *TestEnvironment {
 		userLoginHandler:     userLoginHandler,
 		userOrderPOSTHandler: userOrderPOSTHandler,
 		userOrderGETHandler:  userOrderGETHandler,
+		userBalanceHandler:   userBalanceHandler,
 		testServer:           ts,
 	}
 }

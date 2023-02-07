@@ -45,7 +45,7 @@ func main() {
 	userLoginHandler := handlers.NewUserLoginHandler(userRepository, authenticator)
 	userOrderPOSTHandler := handlers.NewUserOrderPOSTHandler(userOrderRepository, authenticator)
 	userOrderGETHandler := handlers.NewUserOrdersGETHandler(userOrderRepository, authenticator)
-	userBalanceHandler := handlers.NewUserBalanceHandler()
+	userBalanceHandler := handlers.NewUserBalanceHandler(userBalanceService, authenticator)
 	userBalanceWithdrawHandler := handlers.NewUserBalanceWithdrawHandler(userBalanceService, authenticator)
 	userWithdrawalsHandler := handlers.NewUserWithdrawalsHandler(userBalanceWithdrawRepository, authenticator)
 
