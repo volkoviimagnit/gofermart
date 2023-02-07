@@ -35,6 +35,7 @@ type TestEnvironment struct {
 	userOrderGETHandler        *UserOrdersGETHandler
 	userBalanceHandler         *UserBalanceHandler
 	userBalanceWithdrawHandler *UserBalanceWithdrawHandler
+	userWithdrawalsHandler     *UserWithdrawalsHandler
 	userBalanceService         service.IUserBalanceService
 	userRepository             repository.IUserRepository
 	testServer                 *httptest.Server
@@ -105,6 +106,23 @@ func (env *TestEnvironment) CreateUserOrders(accessToken string, count int) ([]*
 	return DTOs, nil
 }
 
+func (env *TestEnvironment) CreateUserBalanceWithdraw(accessToken string, orderNumber string, sum float64) (*request.UserBalanceWithdrawDTO, error) {
+	userBalanceWithdrawDTO := request.NewUserBalanceWithdrawDTO()
+	userBalanceWithdrawDTO.OrderNumber = orderNumber
+	userBalanceWithdrawDTO.Sum = sum
+
+	body, errSerializing := userBalanceWithdrawDTO.Serialize()
+	if errSerializing != nil {
+		return nil, errSerializing
+	}
+
+	response := env.ServeHandler(env.userBalanceWithdrawHandler, body, accessToken)
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New("не удалось создать списание средств")
+	}
+	return userBalanceWithdrawDTO, nil
+}
+
 func (env *TestEnvironment) ServeHandler(handler server.IHttpHandler, body []byte, accessToken ...string) *http.Response {
 	buffer := bytes.NewBuffer(body)
 	testRequest, errRequest := http.NewRequest(handler.GetMethod(), env.testServer.URL+handler.GetPattern(), buffer)
@@ -122,7 +140,6 @@ func (env *TestEnvironment) ServeHandler(handler server.IHttpHandler, body []byt
 	handler.ServeHTTP(testWriter, testRequest)
 
 	httpResponse := testWriter.Result()
-
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
@@ -175,6 +192,7 @@ func NewTestEnvironment() *TestEnvironment {
 		userOrderGETHandler:        userOrderGETHandler,
 		userBalanceHandler:         userBalanceHandler,
 		userBalanceWithdrawHandler: userBalanceWithdrawHandler,
+		userWithdrawalsHandler:     userWithdrawalsHandler,
 		userBalanceService:         userBalanceService,
 		userRepository:             userRepository,
 		testServer:                 ts,
