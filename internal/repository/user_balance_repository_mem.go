@@ -29,3 +29,8 @@ func (u *UserBalanceRepositoryMem) Update(row model.UserBalance) error {
 	u.userBalance[row.GetUserID()] = row
 	return nil
 }
+
+func (u *UserBalanceRepositoryMem) Upset(row model.UserBalance) error {
+	u.userBalance[row.GetUserID()] = row
+	return nil
+}

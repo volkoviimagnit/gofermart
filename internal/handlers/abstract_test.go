@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -27,13 +28,16 @@ type UserTestCase struct {
 }
 
 type TestEnvironment struct {
-	authenticator        *security.AuthenticatorHeader
-	userRegisterHandler  *UserRegisterHandler
-	userLoginHandler     *UserLoginHandler
-	userOrderPOSTHandler *UserOrdersPOSTHandler
-	userOrderGETHandler  *UserOrdersGETHandler
-	userBalanceHandler   *UserBalanceHandler
-	testServer           *httptest.Server
+	authenticator              *security.AuthenticatorHeader
+	userRegisterHandler        *UserRegisterHandler
+	userLoginHandler           *UserLoginHandler
+	userOrderPOSTHandler       *UserOrdersPOSTHandler
+	userOrderGETHandler        *UserOrdersGETHandler
+	userBalanceHandler         *UserBalanceHandler
+	userBalanceWithdrawHandler *UserBalanceWithdrawHandler
+	userBalanceService         service.IUserBalanceService
+	userRepository             repository.IUserRepository
+	testServer                 *httptest.Server
 }
 
 func (env *TestEnvironment) CreateAndAuthorizeRandomUser(t *testing.T) string {
@@ -73,6 +77,12 @@ func (env *TestEnvironment) CreateRandomUser(t *testing.T) (string, string) {
 
 	errRegisterClosing := registerResponse.Body.Close()
 	assert.NoError(t, errRegisterClosing)
+
+	user, errFindingUser := env.userRepository.FindOneByLogin(randomLogin)
+	assert.NoError(t, errFindingUser)
+	_, errBalancing := env.userBalanceService.SetUserBalance(user.Id(), math.MaxFloat32, 0)
+	assert.NoError(t, errBalancing)
+
 	return randomLogin, randomPassword
 }
 
@@ -158,12 +168,15 @@ func NewTestEnvironment() *TestEnvironment {
 	ts := httptest.NewServer(router.GetHandler())
 
 	return &TestEnvironment{
-		authenticator:        authenticator,
-		userRegisterHandler:  userRegisterHandler,
-		userLoginHandler:     userLoginHandler,
-		userOrderPOSTHandler: userOrderPOSTHandler,
-		userOrderGETHandler:  userOrderGETHandler,
-		userBalanceHandler:   userBalanceHandler,
-		testServer:           ts,
+		authenticator:              authenticator,
+		userRegisterHandler:        userRegisterHandler,
+		userLoginHandler:           userLoginHandler,
+		userOrderPOSTHandler:       userOrderPOSTHandler,
+		userOrderGETHandler:        userOrderGETHandler,
+		userBalanceHandler:         userBalanceHandler,
+		userBalanceWithdrawHandler: userBalanceWithdrawHandler,
+		userBalanceService:         userBalanceService,
+		userRepository:             userRepository,
+		testServer:                 ts,
 	}
 }

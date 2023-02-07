@@ -54,16 +54,22 @@ func (h *UserBalanceWithdrawHandler) ServeHTTP(rw http.ResponseWriter, r *http.R
 		return
 	}
 
-	// @todo научиться различать ошибки
-	// @todo http.StatusPaymentRequired
-	// @todo http.StatusUnprocessableEntity
-	errAdding := h.userBalanceService.AddUserWithdraw(passport.GetUser().Id(), dto.GetOrderNumber(), dto.GetSum())
-	if errAdding != nil {
-		h.parent.RenderError(rw, http.StatusPaymentRequired, errDTO)
+	errWithdrawing := h.userBalanceService.AddUserWithdraw(passport.GetUser().Id(), dto.GetOrderNumber(), dto.GetSum())
+	if errWithdrawing == nil {
+		h.parent.RenderResponse(rw, http.StatusOK, []byte("UserBalanceWithdrawHandler"))
 		return
 	}
-
-	h.parent.RenderResponse(rw, http.StatusOK, []byte("UserBalanceWithdrawHandler"))
+	switch errWithdrawing.(type) {
+	default:
+		h.parent.RenderInternalServerError(rw, errWithdrawing)
+		return
+	case *service.NotEnoughFundsError:
+		h.parent.RenderError(rw, http.StatusPaymentRequired, errWithdrawing)
+		return
+	case *service.IncorrectOrderNumberError:
+		h.parent.RenderError(rw, http.StatusUnprocessableEntity, errWithdrawing)
+		return
+	}
 }
 
 func (h *UserBalanceWithdrawHandler) extractRequestDTO(r *http.Request) (*request.UserBalanceWithdrawDTO, error) {

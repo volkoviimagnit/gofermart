@@ -22,6 +22,11 @@ func RandomOrderNumber() string {
 	return goluhn.Generate(16)
 }
 
+func ValidateOrderNumber(number string) bool {
+	errLuhn := goluhn.Validate(number)
+	return errLuhn == nil
+}
+
 func RandomDigits(n int) string {
 	rand.Seed(time.Now().UnixNano())
 
