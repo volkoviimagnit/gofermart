@@ -7,20 +7,29 @@ import (
 	"github.com/volkoviimagnit/gofermart/internal/helpers"
 	"github.com/volkoviimagnit/gofermart/internal/repository"
 	"github.com/volkoviimagnit/gofermart/internal/repository/model"
+	"github.com/volkoviimagnit/gofermart/internal/transport"
 )
 
 type UserBalanceService struct {
 	userBalanceRepository         repository.IUserBalanceRepository
 	userBalanceWithdrawRepository repository.IUserBalanceWithdrawRepository
+	userOrderRepository           repository.IUserOrderRepository
+	messenger                     transport.IMessenger
 }
 
 func NewUserBalanceService(
 	ubRepository repository.IUserBalanceRepository,
-	ubwRepository repository.IUserBalanceWithdrawRepository) IUserBalanceService {
+	ubwRepository repository.IUserBalanceWithdrawRepository,
+	userOrderRepository repository.IUserOrderRepository,
+	messenger transport.IMessenger,
+) IUserBalanceService {
 
 	return &UserBalanceService{
 		userBalanceRepository:         ubRepository,
-		userBalanceWithdrawRepository: ubwRepository}
+		userBalanceWithdrawRepository: ubwRepository,
+		userOrderRepository:           userOrderRepository,
+		messenger:                     messenger,
+	}
 }
 
 // AddUserWithdraw TODO: расчеты нужно делать в рамках одной транзакции
@@ -46,7 +55,11 @@ func (u *UserBalanceService) AddUserWithdraw(userId string, orderNumber string, 
 		ProcessedAt: time.Now(),
 	}
 	errWithdrawInserting := u.userBalanceWithdrawRepository.Insert(userBalanceWithdrawModel)
-	return errWithdrawInserting
+	if errWithdrawInserting != nil {
+		return errWithdrawInserting
+	}
+	errRecalculating := u.RecalculateByUserId(userId)
+	return errRecalculating
 }
 
 func (u *UserBalanceService) GetUserBalance(userId string) (IUserBalance, error) {
@@ -72,6 +85,36 @@ func (u *UserBalanceService) SetUserBalance(userId string, current float64, with
 		return nil, errInserting
 	}
 	return newBalance, nil
+}
+
+func (u *UserBalanceService) RecalculateByOrderNumber(orderNumber string) error {
+	userOrder, errOrder := u.userOrderRepository.FindOneByNumber(orderNumber)
+	if errOrder != nil {
+		return errOrder
+	}
+	userId := userOrder.UserId()
+	return u.RecalculateByUserId(userId)
+}
+
+func (u *UserBalanceService) RecalculateByUserId(userId string) error {
+	userBalance, errBalance := u.userBalanceRepository.FinOneByUserId(userId)
+	if errBalance != nil {
+		return errBalance
+	}
+
+	orderProcessedSum := u.userOrderRepository.SumAccrualByUserId(userId)
+	orderWithdrawSum := u.userBalanceWithdrawRepository.SumWithdrawByUserId(userId)
+	current := orderProcessedSum - orderWithdrawSum
+	if current < 0 {
+		current = 0
+	}
+	userBalance.SetCurrent(current)
+	userBalance.SetWithdrawn(orderWithdrawSum)
+	errBalanceUpdating := u.userBalanceRepository.Update(*userBalance)
+	if errBalanceUpdating != nil {
+		return errBalanceUpdating
+	}
+	return nil
 }
 
 type BalanceNotFoundError struct {

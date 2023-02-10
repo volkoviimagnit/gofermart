@@ -85,4 +85,8 @@ go get -u github.com/stretchr/testify
 https://github.com/ShiraazMoollatjie/goluhn
 go get -u github.com/ShiraazMoollatjie/goluhn
 
+
+https://github.com/go-resty/resty
+go get -u github.com/go-resty/resty/v2
+
 go build -o main && chmod +x main && LOG_LEVEL=trace DATABASE_URI=databaseEnv RUN_ADDRESS=runEnv ACCRUAL_SYSTEM_ADDRESS=accEnv ./main -a=localhostArg -d=databaseArg -r=accrualArg -ll=debug

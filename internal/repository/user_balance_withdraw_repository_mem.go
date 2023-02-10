@@ -22,6 +22,14 @@ func (r UserBalanceWithdrawRepositoryMem) FindByUserId(userId string) ([]model.U
 	return r.userWithdraws[userId], nil
 }
 
+func (r UserBalanceWithdrawRepositoryMem) SumWithdrawByUserId(userId string) float64 {
+	sum := 0.0
+	for _, userWithDraw := range r.userWithdraws[userId] {
+		sum += userWithDraw.GetSum()
+	}
+	return sum
+}
+
 func NewUserBalanceWithdrawRepositoryMem() IUserBalanceWithdrawRepository {
 	return &UserBalanceWithdrawRepositoryMem{
 		userWithdraws: make(map[string][]model.UserBalanceWithdraw, 0),

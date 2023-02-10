@@ -21,3 +21,11 @@ func (ub *UserBalance) GetCurrent() float64 {
 func (ub *UserBalance) GetWithdrawn() float64 {
 	return ub.Withdrawn
 }
+
+func (ub *UserBalance) SetCurrent(current float64) {
+	ub.Current = current
+}
+
+func (ub *UserBalance) SetWithdrawn(withdrawn float64) {
+	ub.Withdrawn = withdrawn
+}

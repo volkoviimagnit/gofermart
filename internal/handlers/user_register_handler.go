@@ -40,6 +40,7 @@ func (h *UserRegisterHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 	// http.StatusBadRequest
 	// http.StatusInternalServerError
 
+	// TODO: выдать токен авторизации сразу после регистрации Authorization
 	resp := response.NewResponse("application/json")
 
 	dto, errDTO := h.extractRequestDTO(r)

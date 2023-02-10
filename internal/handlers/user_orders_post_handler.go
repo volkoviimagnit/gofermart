@@ -2,28 +2,25 @@ package handlers
 
 import (
 	"io"
-	"math/rand"
 	"net/http"
-	"time"
 
 	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/response"
-	"github.com/volkoviimagnit/gofermart/internal/repository"
-	"github.com/volkoviimagnit/gofermart/internal/repository/model"
 	"github.com/volkoviimagnit/gofermart/internal/security"
+	"github.com/volkoviimagnit/gofermart/internal/service"
 )
 
 type UserOrdersPOSTHandler struct {
-	parent              *AbstractHandler
-	userOrderRepository repository.IUserOrderRepository
+	parent           *AbstractHandler
+	userOrderService service.IUserOrderService
 }
 
-func NewUserOrderPOSTHandler(uoRepository repository.IUserOrderRepository, auth security.IAuthenticator) *UserOrdersPOSTHandler {
+func NewUserOrderPOSTHandler(userOrderService service.IUserOrderService, auth security.IAuthenticator) *UserOrdersPOSTHandler {
 	abstract := NewAbstractHandler(http.MethodPost, "/api/user/orders", "text/plain")
 	abstract.SetAuthenticator(auth)
 	return &UserOrdersPOSTHandler{
-		parent:              abstract,
-		userOrderRepository: uoRepository,
+		parent:           abstract,
+		userOrderService: userOrderService,
 	}
 }
 
@@ -75,33 +72,16 @@ func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	oldOrder, errDuplicated := h.userOrderRepository.FindOneByNumber(dto.GetNumber())
-	if errDuplicated != nil {
-		h.parent.RenderInternalServerError(rw, errDuplicated)
+	errOrderAdding := h.userOrderService.AddOrder(passport.GetUser().Id(), dto.GetNumber())
+	switch errOrderAdding.(type) {
+	case *service.RepositoryError:
+		h.parent.RenderInternalServerError(rw, errOrderAdding)
 		return
-	}
-	if oldOrder != nil {
-		isOwnOrder := oldOrder.UserId() == passport.GetUser().Id()
-		if isOwnOrder {
-			h.parent.RenderResponse(rw, http.StatusOK, []byte(""))
-			return
-		} else {
-			h.parent.RenderResponse(rw, http.StatusConflict, []byte(""))
-			return
-		}
-	}
-
-	m := model.UserOrder{}
-	m.SetNumber(dto.GetNumber())
-	m.SetUserId(passport.GetUser().Id())
-	m.SetUploadedAt(time.Now())
-	if rand.Int()%2 == 0 {
-		accrual := rand.Float64()
-		m.SetAccrual(&accrual)
-	}
-	errInserting := h.userOrderRepository.Insert(m)
-	if errInserting != nil {
-		h.parent.RenderInternalServerError(rw, errInserting)
+	case *service.DuplicatedOwnOrderError:
+		h.parent.RenderResponse(rw, http.StatusOK, []byte(""))
+		return
+	case *service.DuplicatedSomebodyElseOrderError:
+		h.parent.RenderResponse(rw, http.StatusConflict, []byte(""))
 		return
 	}
 

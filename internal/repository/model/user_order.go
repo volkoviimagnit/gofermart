@@ -5,7 +5,7 @@ import "time"
 type UserOrder struct {
 	userId     string
 	number     string
-	status     string
+	status     UserOrderStatus
 	accrual    *float64
 	uploadedAt time.Time
 }
@@ -26,11 +26,11 @@ func (u *UserOrder) SetNumber(number string) {
 	u.number = number
 }
 
-func (u *UserOrder) Status() string {
+func (u *UserOrder) Status() UserOrderStatus {
 	return u.status
 }
 
-func (u *UserOrder) SetStatus(status string) {
+func (u *UserOrder) SetStatus(status UserOrderStatus) {
 	u.status = status
 }
 

@@ -63,7 +63,7 @@ func (h *UserOrdersGETHandler) ServeHTTP(rw http.ResponseWriter, request *http.R
 	for _, userOrder := range userOrders {
 		tempDTO = response.UserOrderDTO{
 			Number:     userOrder.Number(),
-			Status:     userOrder.Status(),
+			Status:     userOrder.Status().String(),
 			Accrual:    userOrder.Accrual(),
 			UploadedAt: userOrder.UploadedAt().Format(time.RFC3339),
 		}

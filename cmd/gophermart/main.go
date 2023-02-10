@@ -7,12 +7,14 @@ import (
 	"syscall"
 
 	"github.com/sirupsen/logrus"
+	"github.com/volkoviimagnit/gofermart/internal/client"
 	"github.com/volkoviimagnit/gofermart/internal/config"
 	"github.com/volkoviimagnit/gofermart/internal/handlers"
 	"github.com/volkoviimagnit/gofermart/internal/repository"
 	"github.com/volkoviimagnit/gofermart/internal/security"
 	"github.com/volkoviimagnit/gofermart/internal/server"
 	"github.com/volkoviimagnit/gofermart/internal/service"
+	"github.com/volkoviimagnit/gofermart/internal/transport"
 )
 
 func main() {
@@ -29,6 +31,8 @@ func main() {
 
 	logrus.Debugf("params: %+v", params)
 
+	messenger := transport.NewMessengerMem()
+
 	userRepository := repository.NewUserRepositoryMem()
 	userOrderRepository := repository.NewUserOrderRepositoryMem()
 	userBalanceRepository := repository.NewUserBalanceRepositoryMem()
@@ -39,11 +43,23 @@ func main() {
 	userBalanceService := service.NewUserBalanceService(
 		userBalanceRepository,
 		userBalanceWithdrawRepository,
+		userOrderRepository,
+		messenger,
 	)
+
+	accrualHttpClient := client.NewAccrualHttpClient(params.GetAccrualSystemAddress())
+	userOrderService := service.NewUserOrderService(
+		accrualHttpClient,
+		messenger,
+		userOrderRepository,
+		userBalanceRepository,
+		userBalanceWithdrawRepository,
+	)
+	//userOrderService.AddOrder("1", "109")
 
 	userRegisterHandler := handlers.NewUserRegisterHandler(userRepository)
 	userLoginHandler := handlers.NewUserLoginHandler(userRepository, authenticator)
-	userOrderPOSTHandler := handlers.NewUserOrderPOSTHandler(userOrderRepository, authenticator)
+	userOrderPOSTHandler := handlers.NewUserOrderPOSTHandler(userOrderService, authenticator)
 	userOrderGETHandler := handlers.NewUserOrdersGETHandler(userOrderRepository, authenticator)
 	userBalanceHandler := handlers.NewUserBalanceHandler(userBalanceService, authenticator)
 	userBalanceWithdrawHandler := handlers.NewUserBalanceWithdrawHandler(userBalanceService, authenticator)
@@ -65,8 +81,18 @@ func main() {
 		logrus.Fatal("не удалось сконфигурировать роутер")
 	}
 
+	for i := 0; i < 10; i++ {
+		messenger.AddConsumer(service.NewOrderAccrualConsumer(messenger, accrualHttpClient, userOrderService))
+	}
+	for i := 0; i < 10; i++ {
+		messenger.AddConsumer(service.NewUserBalanceRecalculateConsumer(userBalanceService))
+	}
+
+	messenger.Consume(0, transport.OrderAccrualQueueName)
+
 	listenShutDown()
 
+	// TODO: добавить обработку занятого порта
 	logrus.Fatal(http.ListenAndServe(params.GetRunAddress(), router.GetHandler()))
 }
 
