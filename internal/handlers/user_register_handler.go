@@ -59,7 +59,7 @@ func (h *UserRegisterHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 
 	user, errConflict := h.userRepository.FindOneByLogin(dto.GetLogin())
 	if errConflict != nil {
-		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errConflict.Error()))
+		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte("ошибка поиска по логину - " + errConflict.Error()))
 		h.parent.Render(rw, resp)
 		return
 	}

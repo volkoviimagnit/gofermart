@@ -72,7 +72,7 @@ func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	errOrderAdding := h.userOrderService.AddOrder(passport.GetUser().Id(), dto.GetNumber())
+	errOrderAdding := h.userOrderService.AddOrder(passport.GetUser().GetId(), dto.GetNumber())
 	switch errOrderAdding.(type) {
 	case *service.RepositoryError:
 		h.parent.RenderInternalServerError(rw, errOrderAdding)

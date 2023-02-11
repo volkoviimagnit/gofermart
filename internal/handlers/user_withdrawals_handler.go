@@ -48,7 +48,7 @@ func (h *UserWithdrawalsHandler) ServeHTTP(rw http.ResponseWriter, request *http
 	}
 
 	// TODO добавить сортировку по времени вывода от самых старых к самым новым
-	userWithdrawals, errFinding := h.ubwRepository.FindByUserId(passport.GetUser().Id())
+	userWithdrawals, errFinding := h.ubwRepository.FindByUserId(passport.GetUser().GetId())
 	if errFinding != nil {
 		h.parent.RenderInternalServerError(rw, errFinding)
 		return

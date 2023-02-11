@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"os/signal"
@@ -9,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/volkoviimagnit/gofermart/internal/client"
 	"github.com/volkoviimagnit/gofermart/internal/config"
+	"github.com/volkoviimagnit/gofermart/internal/db"
 	"github.com/volkoviimagnit/gofermart/internal/handlers"
 	"github.com/volkoviimagnit/gofermart/internal/repository"
 	"github.com/volkoviimagnit/gofermart/internal/security"
@@ -19,7 +21,7 @@ import (
 
 func main() {
 	logrus.SetLevel(logrus.TraceLevel)
-	params, errConf := config.GetConfig()
+	params, errConf := config.GetConfig(true)
 	if errConf != nil {
 		logrus.Fatalf("не удалось загрузить конфиг приложения: %+v", errConf)
 	}
@@ -31,9 +33,17 @@ func main() {
 
 	logrus.Debugf("params: %+v", params)
 
+	dbConnection := db.NewConnectionPostgres(context.Background(), params.GetDatabaseURI())
+	dbConnectionError := dbConnection.TryConnect()
+	if dbConnectionError != nil {
+		logrus.Fatalf("ошибка соединения с БД - %s", dbConnectionError)
+	}
+
 	messenger := transport.NewMessengerMem()
 
-	userRepository := repository.NewUserRepositoryMem()
+	//userRepository := repository.NewUserRepositoryMem()
+	userRepository := repository.NewUserRepositoryPG(dbConnection)
+
 	userOrderRepository := repository.NewUserOrderRepositoryMem()
 	userBalanceRepository := repository.NewUserBalanceRepositoryMem()
 	userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()

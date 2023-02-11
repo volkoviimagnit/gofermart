@@ -47,7 +47,7 @@ func (h *UserOrdersGETHandler) ServeHTTP(rw http.ResponseWriter, request *http.R
 		return
 	}
 
-	userOrders, errFinding := h.uoRepository.FindByUserId(passport.GetUser().Id())
+	userOrders, errFinding := h.uoRepository.FindByUserId(passport.GetUser().GetId())
 	if errFinding != nil {
 		h.parent.RenderInternalServerError(rw, errFinding)
 		return

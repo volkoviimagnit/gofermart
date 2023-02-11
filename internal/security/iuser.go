@@ -1,6 +1,6 @@
 package security
 
 type IUser interface {
-	Login() string
-	Id() string
+	GetLogin() string
+	GetId() string
 }

@@ -37,7 +37,7 @@ func (u *UserRepositoryMem) FindOneByCredentials(login string, password string) 
 	if !isExist {
 		return nil, errors.New("несуществующая пара логин/пароль")
 	}
-	if user.Password() != password {
+	if user.GetPassword() != password {
 		return nil, errors.New("неверная пара логин/пароль")
 	}
 	return &user, nil
@@ -68,10 +68,10 @@ func (u *UserRepositoryMem) Update(user model.User) error {
 }
 
 func (u *UserRepositoryMem) addLoginUser(user model.User) {
-	u.loginUsers[user.Login()] = user
+	u.loginUsers[user.GetLogin()] = user
 }
 func (u *UserRepositoryMem) addTokenUser(user model.User) {
-	userToken := user.Token()
+	userToken := user.GetToken()
 	if len(userToken) > 0 {
 		u.tokenUsers[userToken] = user
 	}

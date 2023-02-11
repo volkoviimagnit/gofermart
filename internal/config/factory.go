@@ -9,12 +9,12 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func GetConfig() (IConfig, error) {
+func GetConfig(needArgs bool) (IConfig, error) {
 	envVars, envErr := LoadEnv()
 	if envErr != nil {
 		return nil, envErr
 	}
-	argVars, argErr := loadArgs()
+	argVars, argErr := loadArgs(needArgs)
 	if argErr != nil {
 		return nil, argErr
 	}
@@ -71,7 +71,7 @@ func LoadEnv() (*Env, error) {
 	return cfg, nil
 }
 
-func loadArgs() (*Env, error) {
+func loadArgs(needParse bool) (*Env, error) {
 	args := NewEnv()
 
 	flagSet := flag.NewFlagSet("default", flag.ExitOnError)
@@ -80,9 +80,11 @@ func loadArgs() (*Env, error) {
 	flagSet.StringVar(&args.AccrualSystemAddress, "r", "", "адрес системы расчёта начислений")
 	flagSet.StringVar(&args.LogLevel, "ll", "", "уровень логирования")
 
-	flagError := flagSet.Parse(os.Args[1:])
-	if flagError != nil {
-		return nil, flagError
+	if needParse {
+		flagError := flagSet.Parse(os.Args[1:])
+		if flagError != nil {
+			return nil, flagError
+		}
 	}
 
 	return args, nil

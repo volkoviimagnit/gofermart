@@ -44,7 +44,7 @@ func (h *UserBalanceHandler) ServeHTTP(rw http.ResponseWriter, request *http.Req
 		return
 	}
 
-	userBalance, err := h.ubService.GetUserBalance(passport.GetUser().Id())
+	userBalance, err := h.ubService.GetUserBalance(passport.GetUser().GetId())
 	if err != nil {
 		return
 	}

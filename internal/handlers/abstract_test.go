@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -10,8 +11,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/volkoviimagnit/gofermart/internal/client"
+	"github.com/volkoviimagnit/gofermart/internal/config"
+	"github.com/volkoviimagnit/gofermart/internal/db"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/test"
 	"github.com/volkoviimagnit/gofermart/internal/helpers"
@@ -19,6 +24,7 @@ import (
 	"github.com/volkoviimagnit/gofermart/internal/security"
 	"github.com/volkoviimagnit/gofermart/internal/server"
 	"github.com/volkoviimagnit/gofermart/internal/service"
+	"github.com/volkoviimagnit/gofermart/internal/transport"
 )
 
 type UserTestCase struct {
@@ -81,7 +87,7 @@ func (env *TestEnvironment) CreateRandomUser(t *testing.T) (string, string) {
 
 	user, errFindingUser := env.userRepository.FindOneByLogin(randomLogin)
 	assert.NoError(t, errFindingUser)
-	_, errBalancing := env.userBalanceService.SetUserBalance(user.Id(), math.MaxFloat32, 0)
+	_, errBalancing := env.userBalanceService.SetUserBalance(user.GetId(), math.MaxFloat32, 0)
 	assert.NoError(t, errBalancing)
 
 	return randomLogin, randomPassword
@@ -151,7 +157,21 @@ func (env *TestEnvironment) ServeHandler(handler server.IHttpHandler, body []byt
 }
 
 func NewTestEnvironment() *TestEnvironment {
-	userRepository := repository.NewUserRepositoryMem()
+	params, errConf := config.GetConfig(false)
+	if errConf != nil {
+		logrus.Fatalf("ошибка cбора настроек - %s", errConf)
+	}
+	dbConnection := db.NewConnectionPostgres(context.Background(), params.GetDatabaseURI())
+	dbConnectionError := dbConnection.TryConnect()
+	if dbConnectionError != nil {
+		logrus.Fatalf("ошибка соединения с БД - %s", dbConnectionError)
+	}
+
+	messenger := transport.NewMessengerMem()
+
+	//userRepository := repository.NewUserRepositoryMem()
+	userRepository := repository.NewUserRepositoryPG(dbConnection)
+
 	userOrderRepository := repository.NewUserOrderRepositoryMem()
 	userBalanceRepository := repository.NewUserBalanceRepositoryMem()
 	userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
@@ -161,11 +181,23 @@ func NewTestEnvironment() *TestEnvironment {
 	userBalanceService := service.NewUserBalanceService(
 		userBalanceRepository,
 		userBalanceWithdrawRepository,
+		userOrderRepository,
+		messenger,
 	)
+
+	accrualHttpClient := client.NewAccrualHttpClient(params.GetAccrualSystemAddress())
+	userOrderService := service.NewUserOrderService(
+		accrualHttpClient,
+		messenger,
+		userOrderRepository,
+		userBalanceRepository,
+		userBalanceWithdrawRepository,
+	)
+	//userOrderService.AddOrder("1", "109")
 
 	userRegisterHandler := NewUserRegisterHandler(userRepository)
 	userLoginHandler := NewUserLoginHandler(userRepository, authenticator)
-	userOrderPOSTHandler := NewUserOrderPOSTHandler(userOrderRepository, authenticator)
+	userOrderPOSTHandler := NewUserOrderPOSTHandler(userOrderService, authenticator)
 	userOrderGETHandler := NewUserOrdersGETHandler(userOrderRepository, authenticator)
 	userBalanceHandler := NewUserBalanceHandler(userBalanceService, authenticator)
 	userBalanceWithdrawHandler := NewUserBalanceWithdrawHandler(userBalanceService, authenticator)

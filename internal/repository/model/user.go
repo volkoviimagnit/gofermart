@@ -1,40 +1,40 @@
 package model
 
 type User struct {
-	id       string
-	login    string
-	password string
-	token    string
+	Id       string
+	Login    string
+	Password string
+	Token    string
 }
 
-func (u *User) Id() string {
-	return u.id
+func (u *User) GetId() string {
+	return u.Id
 }
 
 func (u *User) SetId(id string) {
-	u.id = id
+	u.Id = id
 }
 
-func (u *User) Login() string {
-	return u.login
+func (u *User) GetLogin() string {
+	return u.Login
 }
 
 func (u *User) SetLogin(login string) {
-	u.login = login
+	u.Login = login
 }
 
-func (u *User) Password() string {
-	return u.password
+func (u *User) GetPassword() string {
+	return u.Password
 }
 
 func (u *User) SetPassword(password string) {
-	u.password = password
+	u.Password = password
 }
 
-func (u *User) Token() string {
-	return u.token
+func (u *User) GetToken() string {
+	return u.Token
 }
 
 func (u *User) SetToken(token string) {
-	u.token = token
+	u.Token = token
 }

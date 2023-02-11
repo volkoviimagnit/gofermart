@@ -30,17 +30,6 @@ func (m *MessengerMem) AddConsumer(consumer IConsumer) {
 
 func (m *MessengerMem) Dispatch(message IMessage) {
 	m.queue[message.GetQueueName()] = append(m.queue[message.GetQueueName()], message)
-	/*
-		go func() {
-			errRunning := message.Run()
-			if errRunning != nil {
-				logrus.Fatalf("goroutine error %s", errRunning)
-				return
-			}
-			return
-		}()
-	*/
-	//m.Signal(message.GetQueueName())
 }
 
 // Consume TODO: узнать как это правильно реализовать через каналы?

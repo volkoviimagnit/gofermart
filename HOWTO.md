@@ -1,4 +1,8 @@
 # TODO
+- Создать два окружения, чтобы не редактировать сборку в main.go и abstract_test.go
+- Перевести остальные репозитории на Postgres
+- Добавить автоматическое создание БД
+- Добавить выдачу токена авторизации сразу при регистрации
 
 - Пользователи
 - - Создание пользователя = регистрация
@@ -85,8 +89,11 @@ go get -u github.com/stretchr/testify
 https://github.com/ShiraazMoollatjie/goluhn
 go get -u github.com/ShiraazMoollatjie/goluhn
 
-
 https://github.com/go-resty/resty
 go get -u github.com/go-resty/resty/v2
+
+https://github.com/jackc/pgx
+go get -u github.com/jackc/pgx/v4
+go mod tidy
 
 go build -o main && chmod +x main && LOG_LEVEL=trace DATABASE_URI=databaseEnv RUN_ADDRESS=runEnv ACCRUAL_SYSTEM_ADDRESS=accEnv ./main -a=localhostArg -d=databaseArg -r=accrualArg -ll=debug
