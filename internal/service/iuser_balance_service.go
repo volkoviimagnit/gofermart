@@ -1,9 +1,9 @@
 package service
 
 type IUserBalanceService interface {
-	AddUserWithdraw(userId string, orderNumber string, sum float64) error
-	GetUserBalance(userId string) (IUserBalance, error)
-	SetUserBalance(userId string, current float64, withdrawn float64) (IUserBalance, error)
-	RecalculateByOrderNumber(orderId string) error
-	RecalculateByUserId(userId string) error
+	AddUserWithdraw(userID string, orderNumber string, sum float64) error
+	GetUserBalance(userID string) (IUserBalance, error)
+	SetUserBalance(userID string, current float64, withdrawn float64) (IUserBalance, error)
+	RecalculateByOrderNumber(orderNumber string) error
+	RecalculateByUserID(userID string) error
 }

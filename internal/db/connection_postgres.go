@@ -57,7 +57,7 @@ func (s *ConnectionPostgres) TryConnect() error {
 		return errors.New("Unexpected failure on QueryRow Scan: " + err.Error())
 	}
 	if !actualDate.Equal(d) {
-		return errors.New("Did not transcode date successfully: %v is not %v" + err.Error())
+		return errors.New("did not transcode date successfully")
 	}
 
 	return nil

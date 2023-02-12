@@ -33,12 +33,12 @@ func NewUserBalanceService(
 }
 
 // AddUserWithdraw TODO: расчеты нужно делать в рамках одной транзакции
-func (u *UserBalanceService) AddUserWithdraw(userId string, orderNumber string, sum float64) error {
+func (u *UserBalanceService) AddUserWithdraw(userID string, orderNumber string, sum float64) error {
 	if !helpers.ValidateOrderNumber(orderNumber) {
 		return NewIncorrectOrderNumberError(orderNumber)
 	}
 
-	userBalance, errFindBalancing := u.GetUserBalance(userId)
+	userBalance, errFindBalancing := u.GetUserBalance(userID)
 	if errFindBalancing != nil {
 		return NewBalanceNotFoundError(errFindBalancing.Error())
 	}
@@ -49,7 +49,7 @@ func (u *UserBalanceService) AddUserWithdraw(userId string, orderNumber string, 
 	}
 
 	userBalanceWithdrawModel := model.UserBalanceWithdraw{
-		UserId:      userId,
+		UserId:      userID,
 		OrderNumber: orderNumber,
 		Sum:         sum,
 		ProcessedAt: time.Now(),
@@ -58,12 +58,12 @@ func (u *UserBalanceService) AddUserWithdraw(userId string, orderNumber string, 
 	if errWithdrawInserting != nil {
 		return errWithdrawInserting
 	}
-	errRecalculating := u.RecalculateByUserId(userId)
+	errRecalculating := u.RecalculateByUserID(userID)
 	return errRecalculating
 }
 
-func (u *UserBalanceService) GetUserBalance(userId string) (IUserBalance, error) {
-	row, err := u.userBalanceRepository.FinOneByUserId(userId)
+func (u *UserBalanceService) GetUserBalance(userID string) (IUserBalance, error) {
+	row, err := u.userBalanceRepository.FinOneByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,15 +71,15 @@ func (u *UserBalanceService) GetUserBalance(userId string) (IUserBalance, error)
 		return row, nil
 	}
 
-	newBalance, errBalancing := u.SetUserBalance(userId, 0, 0)
+	newBalance, errBalancing := u.SetUserBalance(userID, 0, 0)
 	if errBalancing != nil {
 		return nil, errBalancing
 	}
 	return newBalance, nil
 }
 
-func (u *UserBalanceService) SetUserBalance(userId string, current float64, withdrawn float64) (IUserBalance, error) {
-	newBalance := model.NewUserBalance(userId, current, withdrawn)
+func (u *UserBalanceService) SetUserBalance(userID string, current float64, withdrawn float64) (IUserBalance, error) {
+	newBalance := model.NewUserBalance(userID, current, withdrawn)
 	errInserting := u.userBalanceRepository.Upset(*newBalance)
 	if errInserting != nil {
 		return nil, errInserting
@@ -92,18 +92,18 @@ func (u *UserBalanceService) RecalculateByOrderNumber(orderNumber string) error 
 	if errOrder != nil {
 		return errOrder
 	}
-	userId := userOrder.UserId()
-	return u.RecalculateByUserId(userId)
+	userID := userOrder.UserId()
+	return u.RecalculateByUserID(userID)
 }
 
-func (u *UserBalanceService) RecalculateByUserId(userId string) error {
-	userBalance, errBalance := u.userBalanceRepository.FinOneByUserId(userId)
+func (u *UserBalanceService) RecalculateByUserID(userID string) error {
+	userBalance, errBalance := u.userBalanceRepository.FinOneByUserID(userID)
 	if errBalance != nil {
 		return errBalance
 	}
 
-	orderProcessedSum := u.userOrderRepository.SumAccrualByUserId(userId)
-	orderWithdrawSum := u.userBalanceWithdrawRepository.SumWithdrawByUserId(userId)
+	orderProcessedSum := u.userOrderRepository.SumAccrualByUserId(userID)
+	orderWithdrawSum := u.userBalanceWithdrawRepository.SumWithdrawByUserId(userID)
 	current := orderProcessedSum - orderWithdrawSum
 	if current < 0 {
 		current = 0

@@ -81,7 +81,6 @@ func (h *UserRegisterHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 
 	resp.SetStatus(http.StatusOK).SetBody([]byte(""))
 	h.parent.Render(rw, resp)
-	return
 }
 
 func (h *UserRegisterHandler) extractRequestDTO(r *http.Request) (*request.UserDTO, error) {

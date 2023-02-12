@@ -41,14 +41,16 @@ func TestUserBalanceHandler_ServeHTTP(t *testing.T) {
 			}
 
 			jsonResponse := testEnvironment.ServeHandler(testEnvironment.userBalanceHandler, []byte(""), accessToken)
-			userBalanceDTO := response.UserBalanceDTO{}
-			jsonDecoder := json.NewDecoder(jsonResponse.Body)
+			err := jsonResponse.Body.Close()
+			assert.NoError(t, err)
 			defer func(Body io.ReadCloser) {
 				err := Body.Close()
 				if err != nil {
 					assert.NoError(t, err)
 				}
 			}(jsonResponse.Body)
+			userBalanceDTO := response.UserBalanceDTO{}
+			jsonDecoder := json.NewDecoder(jsonResponse.Body)
 			errDecoding := jsonDecoder.Decode(&userBalanceDTO)
 			assert.Equal(t, tt.errDecoding, errDecoding)
 			assert.Equal(t, tt.expected.StatusCode, jsonResponse.StatusCode)

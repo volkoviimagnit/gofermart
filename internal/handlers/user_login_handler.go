@@ -86,8 +86,6 @@ func (h *UserLoginHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	resp.SetStatus(http.StatusOK).SetBody(body)
 	h.auth.RenderAuthenticatedToken(rw, accessToken)
 	h.parent.Render(rw, resp)
-
-	return
 }
 
 func (h *UserLoginHandler) extractRequestDTO(r *http.Request) (*request.UserDTO, error) {

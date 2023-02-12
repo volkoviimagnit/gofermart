@@ -24,9 +24,9 @@ func (u *UserBalanceRecalculateConsumer) Execute(message transport.IMessage) err
 		return errors.New("UserBalanceRecalculateConsumer - конзюмер не поддерживает данный тип сообщений")
 	}
 
-	orderId := m.ByOrderNumber
-	logrus.Debugf("UserBalanceRecalculateConsumer orderId:%s", orderId)
-	err := u.userBalanceService.RecalculateByOrderNumber(orderId)
+	orderID := m.ByOrderNumber
+	logrus.Debugf("UserBalanceRecalculateConsumer orderID:%s", orderID)
+	err := u.userBalanceService.RecalculateByOrderNumber(orderID)
 	if err != nil {
 		return err
 	}

@@ -35,12 +35,12 @@ func (u *UserRepositoryPG) FindOneByCredentials(login string, password string) (
 }
 
 func (u *UserRepositoryPG) prepareModel(row pgx.Row) (*model.User, error) {
-	var userId, userLogin, userPass string
+	var userID, userLogin, userPass string
 	var userToken sql.NullString
 
 	user := model.User{}
 
-	err := row.Scan(&userId, &userLogin, &userPass, &userToken)
+	err := row.Scan(&userID, &userLogin, &userPass, &userToken)
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}
@@ -48,7 +48,7 @@ func (u *UserRepositoryPG) prepareModel(row pgx.Row) (*model.User, error) {
 		return nil, errors.New("ошибка сканирования - " + err.Error())
 	}
 
-	user.SetId(userId)
+	user.SetID(userID)
 	user.SetLogin(userLogin)
 	user.SetPassword(userPass)
 	if userToken.Valid {
@@ -86,7 +86,7 @@ WHERE id = $1;`
 	} else {
 		userToken.Valid = false
 	}
-	errExecuting := u.conn.Exec(sqlRequest, user.GetId(), user.GetLogin(), user.GetPassword(), userToken)
+	errExecuting := u.conn.Exec(sqlRequest, user.GetID(), user.GetLogin(), user.GetPassword(), userToken)
 	return errExecuting
 }
 

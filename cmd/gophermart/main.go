@@ -43,9 +43,9 @@ func main() {
 
 	//userRepository := repository.NewUserRepositoryMem()
 	userRepository := repository.NewUserRepositoryPG(dbConnection)
-
 	userOrderRepository := repository.NewUserOrderRepositoryMem()
-	userBalanceRepository := repository.NewUserBalanceRepositoryMem()
+	//userBalanceRepository := repository.NewUserBalanceRepositoryMem()
+	userBalanceRepository := repository.NewUserBalanceRepositoryPG(dbConnection)
 	userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
 
 	authenticator := security.NewAuthenticator(userRepository)

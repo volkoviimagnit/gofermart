@@ -24,7 +24,7 @@ func NewUserRepositoryMem() IUserRepository {
 }
 
 func (u *UserRepositoryMem) Insert(user model.User) error {
-	user.SetId(randStr(10))
+	user.SetID(randStr(10))
 	u.addLoginUser(user)
 	u.addTokenUser(user)
 	return nil

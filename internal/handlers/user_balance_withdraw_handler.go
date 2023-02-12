@@ -54,7 +54,7 @@ func (h *UserBalanceWithdrawHandler) ServeHTTP(rw http.ResponseWriter, r *http.R
 		return
 	}
 
-	errWithdrawing := h.userBalanceService.AddUserWithdraw(passport.GetUser().GetId(), dto.GetOrderNumber(), dto.GetSum())
+	errWithdrawing := h.userBalanceService.AddUserWithdraw(passport.GetUser().GetID(), dto.GetOrderNumber(), dto.GetSum())
 	if errWithdrawing == nil {
 		h.parent.RenderResponse(rw, http.StatusOK, []byte("UserBalanceWithdrawHandler"))
 		return

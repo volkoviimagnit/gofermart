@@ -17,11 +17,11 @@ func (u *UserBalanceRepositoryMem) Insert(row model.UserBalance) error {
 	return nil
 }
 
-func (u *UserBalanceRepositoryMem) FinOneByUserId(userId string) (*model.UserBalance, error) {
-	if _, isExist := u.userBalance[userId]; !isExist {
+func (u *UserBalanceRepositoryMem) FinOneByUserID(userID string) (*model.UserBalance, error) {
+	if _, isExist := u.userBalance[userID]; !isExist {
 		return nil, nil
 	}
-	row := u.userBalance[userId]
+	row := u.userBalance[userID]
 	return &row, nil
 }
 

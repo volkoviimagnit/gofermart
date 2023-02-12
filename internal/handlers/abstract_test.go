@@ -87,7 +87,7 @@ func (env *TestEnvironment) CreateRandomUser(t *testing.T) (string, string) {
 
 	user, errFindingUser := env.userRepository.FindOneByLogin(randomLogin)
 	assert.NoError(t, errFindingUser)
-	_, errBalancing := env.userBalanceService.SetUserBalance(user.GetId(), math.MaxFloat32, 0)
+	_, errBalancing := env.userBalanceService.SetUserBalance(user.GetID(), math.MaxFloat32, 0)
 	assert.NoError(t, errBalancing)
 
 	return randomLogin, randomPassword
@@ -152,7 +152,10 @@ func (env *TestEnvironment) ServeHandler(handler server.IHttpHandler, body []byt
 			panic(err)
 		}
 	}(httpResponse.Body)
-
+	err := httpResponse.Body.Close()
+	if err != nil {
+		return nil
+	}
 	return httpResponse
 }
 
@@ -173,7 +176,8 @@ func NewTestEnvironment() *TestEnvironment {
 	userRepository := repository.NewUserRepositoryPG(dbConnection)
 
 	userOrderRepository := repository.NewUserOrderRepositoryMem()
-	userBalanceRepository := repository.NewUserBalanceRepositoryMem()
+	//userBalanceRepository := repository.NewUserBalanceRepositoryMem()
+	userBalanceRepository := repository.NewUserBalanceRepositoryPG(dbConnection)
 	userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
 
 	authenticator := security.NewAuthenticator(userRepository)
