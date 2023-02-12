@@ -73,9 +73,9 @@ func (o *OrderAccrualRequestConsumer) Execute(message transport.IMessage) error 
 }
 
 // retryRequest TODO: уточнить в ТЗ что с retry-policy?
-func (o *OrderAccrualRequestConsumer) retryRequest(orderNumber string, retryAfterSeconds time.Duration) {
+func (o *OrderAccrualRequestConsumer) retryRequest(orderNumber string, retryAfter time.Duration) {
 	logrus.Debugf("отложенное выполнение %s", orderNumber)
-	time.AfterFunc(retryAfterSeconds*time.Second, func() {
+	time.AfterFunc(retryAfter*time.Second, func() {
 		o.messenger.Dispatch(&OrderAccrualRequestMessage{
 			OrderNumber: orderNumber,
 		})

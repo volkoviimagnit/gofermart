@@ -27,12 +27,20 @@ func NewConnectionPostgres(ctx context.Context, dsn string) *ConnectionPostgres 
 }
 
 func (s *ConnectionPostgres) Exec(sql string, arguments ...any) error {
+	errConnecting := s.TryConnect()
+	if errConnecting != nil {
+		return errConnecting
+	}
 	_, errExecuting := s.conn.Exec(s.ctx, sql, arguments...)
 	return errExecuting
 }
 
-func (s *ConnectionPostgres) Query(sql string, arguments ...any) pgx.Row {
-	return s.conn.QueryRow(s.ctx, sql, arguments...)
+func (s *ConnectionPostgres) QueryRow(sql string, arguments ...any) (pgx.Row, error) {
+	return s.conn.QueryRow(s.ctx, sql, arguments...), nil
+}
+
+func (s *ConnectionPostgres) Query(sql string, arguments ...any) (pgx.Rows, error) {
+	return s.conn.Query(s.ctx, sql, arguments...)
 }
 
 // tryConnect

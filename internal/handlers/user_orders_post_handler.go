@@ -87,7 +87,6 @@ func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, r *http.Reques
 
 	resp.SetStatus(http.StatusAccepted).SetBody([]byte(dto.GetNumber()))
 	h.parent.Render(rw, resp)
-	return
 }
 
 func (h *UserOrdersPOSTHandler) extractRequestDTO(r *http.Request) (*request.UserOrdersPOSTDTO, error) {

@@ -7,11 +7,11 @@ type UserBalanceWithdrawRepositoryMem struct {
 }
 
 func (r UserBalanceWithdrawRepositoryMem) Insert(row model.UserBalanceWithdraw) error {
-	userId := row.GetUserId()
-	if _, isExist := r.userWithdraws[userId]; !isExist {
-		r.userWithdraws[userId] = make([]model.UserBalanceWithdraw, 0)
+	userID := row.GetUserId()
+	if _, isExist := r.userWithdraws[userID]; !isExist {
+		r.userWithdraws[userID] = make([]model.UserBalanceWithdraw, 0)
 	}
-	r.userWithdraws[userId] = append(r.userWithdraws[userId], row)
+	r.userWithdraws[userID] = append(r.userWithdraws[userID], row)
 	return nil
 }
 

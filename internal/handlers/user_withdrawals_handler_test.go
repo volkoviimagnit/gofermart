@@ -57,6 +57,8 @@ func TestUserWithdrawalsHandler_ServeHTTP_Negative_Positive(t *testing.T) {
 			}
 
 			jsonResponse := testEnvironment.ServeHandler(testEnvironment.userWithdrawalsHandler, []byte(""), accessToken)
+			err := jsonResponse.Body.Close()
+			assert.NoError(t, err)
 
 			receivedUserWithdrawalDTOs := make([]response.UserWithdrawalDTO, 0)
 			jsonDecoder := json.NewDecoder(jsonResponse.Body)

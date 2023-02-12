@@ -19,9 +19,9 @@ type UserOrderService struct {
 	userBalanceWithdrawRepository repository.IUserBalanceWithdrawRepository
 }
 
-func (u *UserOrderService) Update(orderId string, status response.OrderStatus, accrual *float64) error {
+func (u *UserOrderService) Update(orderNumber string, status response.OrderStatus, accrual *float64) error {
 	logrus.Debugf("UserOrderService.Update")
-	oldOrder, errRepository := u.userOrderRepository.FindOneByNumber(orderId)
+	oldOrder, errRepository := u.userOrderRepository.FindOneByNumber(orderNumber)
 	if errRepository != nil {
 		return &RepositoryError{err: errRepository}
 	}
@@ -51,13 +51,13 @@ func (u *UserOrderService) generateUserOrderStatus(accrualStatus response.OrderS
 	}
 }
 
-func (u *UserOrderService) AddOrder(userId string, orderId string) error {
-	oldOrder, errRepository := u.userOrderRepository.FindOneByNumber(orderId)
+func (u *UserOrderService) AddOrder(userID string, orderNumber string) error {
+	oldOrder, errRepository := u.userOrderRepository.FindOneByNumber(orderNumber)
 	if errRepository != nil {
 		return &RepositoryError{err: errRepository}
 	}
 	if oldOrder != nil {
-		isOwnOrder := oldOrder.UserId() == userId
+		isOwnOrder := oldOrder.GetUserID() == userID
 		if isOwnOrder {
 			return &DuplicatedOwnOrderError{}
 		} else {
@@ -66,8 +66,8 @@ func (u *UserOrderService) AddOrder(userId string, orderId string) error {
 	}
 
 	m := model.UserOrder{}
-	m.SetNumber(orderId)
-	m.SetUserId(userId)
+	m.SetNumber(orderNumber)
+	m.SetUserID(userID)
 	m.SetUploadedAt(time.Now())
 	accrual := 0.0
 	m.SetAccrual(&accrual)
@@ -78,7 +78,7 @@ func (u *UserOrderService) AddOrder(userId string, orderId string) error {
 	}
 
 	mess := OrderAccrualRequestMessage{
-		OrderNumber: orderId,
+		OrderNumber: orderNumber,
 	}
 	u.messenger.Dispatch(&mess)
 	return nil

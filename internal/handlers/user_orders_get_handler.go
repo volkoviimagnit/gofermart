@@ -47,7 +47,7 @@ func (h *UserOrdersGETHandler) ServeHTTP(rw http.ResponseWriter, request *http.R
 		return
 	}
 
-	userOrders, errFinding := h.uoRepository.FindByUserId(passport.GetUser().GetID())
+	userOrders, errFinding := h.uoRepository.FindByUserID(passport.GetUser().GetID())
 	if errFinding != nil {
 		h.parent.RenderInternalServerError(rw, errFinding)
 		return
@@ -62,10 +62,10 @@ func (h *UserOrdersGETHandler) ServeHTTP(rw http.ResponseWriter, request *http.R
 
 	for _, userOrder := range userOrders {
 		tempDTO = response.UserOrderDTO{
-			Number:     userOrder.Number(),
-			Status:     userOrder.Status().String(),
-			Accrual:    userOrder.Accrual(),
-			UploadedAt: userOrder.UploadedAt().Format(time.RFC3339),
+			Number:     userOrder.GetNumber(),
+			Status:     userOrder.GetStatus().String(),
+			Accrual:    userOrder.GetAccrual(),
+			UploadedAt: userOrder.GetUploadedAt().Format(time.RFC3339),
 		}
 		DTOs = append(DTOs, tempDTO)
 	}
@@ -79,5 +79,4 @@ func (h *UserOrdersGETHandler) ServeHTTP(rw http.ResponseWriter, request *http.R
 	resp := response.NewResponse(h.parent.contentType)
 	resp.SetStatus(http.StatusOK).SetBody(body)
 	h.parent.Render(rw, resp)
-	return
 }

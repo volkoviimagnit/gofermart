@@ -52,6 +52,8 @@ func TestUserOrdersGETHandler_ServeHTTP_Positive(t *testing.T) {
 			}
 
 			jsonResponse := testEnvironment.ServeHandler(testEnvironment.userOrderGETHandler, []byte(""), accessToken)
+			err := jsonResponse.Body.Close()
+			assert.NoError(t, err)
 
 			receivedOrderDTOs := make([]response.UserOrderDTO, 0)
 			jsonDecoder := json.NewDecoder(jsonResponse.Body)
@@ -94,6 +96,9 @@ func TestUserOrdersGETHandler_ServeHTTP_Negative(t *testing.T) {
 			assert.Equal(t, len(createdOrderDTOs), needOrders)
 			assert.NoError(t, errOrderCreating)
 			jsonResponse := testEnvironment.ServeHandler(testEnvironment.userOrderGETHandler, []byte(""), tt.token)
+			errBodyClosing := jsonResponse.Body.Close()
+			assert.NoError(t, errBodyClosing)
+
 			receivedOrderDTOs := make([]response.UserOrderDTO, 0)
 			jsonDecoder := json.NewDecoder(jsonResponse.Body)
 			defer func(Body io.ReadCloser) {

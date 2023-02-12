@@ -105,6 +105,10 @@ func (env *TestEnvironment) CreateUserOrders(accessToken string, count int) ([]*
 		}
 
 		response := env.ServeHandler(env.userOrderPOSTHandler, body, accessToken)
+		errBodyClosing := response.Body.Close()
+		if errBodyClosing != nil {
+			return nil, errBodyClosing
+		}
 		if response.StatusCode != http.StatusAccepted {
 			return nil, errors.New("не удалось создать заказ")
 		}
@@ -123,6 +127,11 @@ func (env *TestEnvironment) CreateUserBalanceWithdraw(accessToken string, orderN
 	}
 
 	response := env.ServeHandler(env.userBalanceWithdrawHandler, body, accessToken)
+	errBodyClosing := response.Body.Close()
+	if errBodyClosing != nil {
+		return nil, errBodyClosing
+	}
+
 	if response.StatusCode != http.StatusOK {
 		return nil, errors.New("не удалось создать списание средств")
 	}
@@ -164,7 +173,7 @@ func NewTestEnvironment() *TestEnvironment {
 	if errConf != nil {
 		logrus.Fatalf("ошибка cбора настроек - %s", errConf)
 	}
-	dbConnection := db.NewConnectionPostgres(context.Background(), params.GetDatabaseURI())
+	dbConnection := db.NewConnectionPostgres(context.Background(), "postgres://postgres:postgres@127.0.0.1:5433/gofermart")
 	dbConnectionError := dbConnection.TryConnect()
 	if dbConnectionError != nil {
 		logrus.Fatalf("ошибка соединения с БД - %s", dbConnectionError)
@@ -173,10 +182,12 @@ func NewTestEnvironment() *TestEnvironment {
 	messenger := transport.NewMessengerMem()
 
 	//userRepository := repository.NewUserRepositoryMem()
-	userRepository := repository.NewUserRepositoryPG(dbConnection)
-
-	userOrderRepository := repository.NewUserOrderRepositoryMem()
+	//userOrderRepository := repository.NewUserOrderRepositoryMem()
 	//userBalanceRepository := repository.NewUserBalanceRepositoryMem()
+	//userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
+
+	userRepository := repository.NewUserRepositoryPG(dbConnection)
+	userOrderRepository := repository.NewUserOrderRepositoryPG(dbConnection)
 	userBalanceRepository := repository.NewUserBalanceRepositoryPG(dbConnection)
 	userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
 

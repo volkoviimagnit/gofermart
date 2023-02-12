@@ -19,7 +19,7 @@ func (u *UserBalanceRepositoryPG) Insert(row model.UserBalance) error {
 func (u *UserBalanceRepositoryPG) FinOneByUserID(userID string) (*model.UserBalance, error) {
 	sqlRequest := `SELECT user_id, current, withdrawn FROM public."user_balance" WHERE user_id = $1 LIMIT 1`
 
-	row := u.conn.Query(sqlRequest, userID)
+	row, _ := u.conn.QueryRow(sqlRequest, userID)
 	userBalance, err := u.prepareModel(row)
 	if err != nil {
 		return nil, err

@@ -42,9 +42,12 @@ func main() {
 	messenger := transport.NewMessengerMem()
 
 	//userRepository := repository.NewUserRepositoryMem()
-	userRepository := repository.NewUserRepositoryPG(dbConnection)
-	userOrderRepository := repository.NewUserOrderRepositoryMem()
+	//userOrderRepository := repository.NewUserOrderRepositoryMem()
 	//userBalanceRepository := repository.NewUserBalanceRepositoryMem()
+	//userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
+
+	userRepository := repository.NewUserRepositoryPG(dbConnection)
+	userOrderRepository := repository.NewUserOrderRepositoryPG(dbConnection)
 	userBalanceRepository := repository.NewUserBalanceRepositoryPG(dbConnection)
 	userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
 
@@ -57,9 +60,9 @@ func main() {
 		messenger,
 	)
 
-	accrualHttpClient := client.NewAccrualHttpClient(params.GetAccrualSystemAddress())
+	accrualHTTPClient := client.NewAccrualHttpClient(params.GetAccrualSystemAddress())
 	userOrderService := service.NewUserOrderService(
-		accrualHttpClient,
+		accrualHTTPClient,
 		messenger,
 		userOrderRepository,
 		userBalanceRepository,
@@ -92,7 +95,7 @@ func main() {
 	}
 
 	for i := 0; i < 10; i++ {
-		messenger.AddConsumer(service.NewOrderAccrualConsumer(messenger, accrualHttpClient, userOrderService))
+		messenger.AddConsumer(service.NewOrderAccrualConsumer(messenger, accrualHTTPClient, userOrderService))
 	}
 	for i := 0; i < 10; i++ {
 		messenger.AddConsumer(service.NewUserBalanceRecalculateConsumer(userBalanceService))

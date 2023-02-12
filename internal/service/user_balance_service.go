@@ -92,7 +92,7 @@ func (u *UserBalanceService) RecalculateByOrderNumber(orderNumber string) error 
 	if errOrder != nil {
 		return errOrder
 	}
-	userID := userOrder.UserId()
+	userID := userOrder.GetUserID()
 	return u.RecalculateByUserID(userID)
 }
 
@@ -102,7 +102,10 @@ func (u *UserBalanceService) RecalculateByUserID(userID string) error {
 		return errBalance
 	}
 
-	orderProcessedSum := u.userOrderRepository.SumAccrualByUserId(userID)
+	orderProcessedSum, errProcessedSum := u.userOrderRepository.SumAccrualByUserID(userID)
+	if errProcessedSum != nil {
+		return errProcessedSum
+	}
 	orderWithdrawSum := u.userBalanceWithdrawRepository.SumWithdrawByUserId(userID)
 	current := orderProcessedSum - orderWithdrawSum
 	if current < 0 {
