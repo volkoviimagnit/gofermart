@@ -4,6 +4,6 @@ import "github.com/volkoviimagnit/gofermart/internal/repository/model"
 
 type IUserBalanceWithdrawRepository interface {
 	Insert(row model.UserBalanceWithdraw) error
-	FindByUserId(userId string) ([]model.UserBalanceWithdraw, error)
-	SumWithdrawByUserId(userId string) float64
+	FindByUserID(userID string) ([]model.UserBalanceWithdraw, error)
+	SumWithdrawByUserID(userID string) (float64, error)
 }

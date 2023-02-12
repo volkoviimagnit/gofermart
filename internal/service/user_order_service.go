@@ -66,6 +66,7 @@ func (u *UserOrderService) AddOrder(userID string, orderNumber string) error {
 	}
 
 	m := model.UserOrder{}
+	m.SetStatus(model.UserOrderStatusNew)
 	m.SetNumber(orderNumber)
 	m.SetUserID(userID)
 	m.SetUploadedAt(time.Now())

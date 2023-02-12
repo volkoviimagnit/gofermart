@@ -25,7 +25,12 @@ func (u *UserRepositoryPG) Insert(user model.User) error {
 		return errConnecting
 	}
 
-	var userToken sql.NullString
+	userToken := sql.NullString{Valid: false}
+	if len(user.GetToken()) > 0 {
+		userToken.Valid = true
+		userToken.String = user.GetToken()
+	}
+
 	errExecuting := u.conn.Exec(sqlRequest, user.GetLogin(), user.GetPassword(), userToken)
 	return errExecuting
 }

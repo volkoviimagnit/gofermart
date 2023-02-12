@@ -15,19 +15,19 @@ func (r UserBalanceWithdrawRepositoryMem) Insert(row model.UserBalanceWithdraw) 
 	return nil
 }
 
-func (r UserBalanceWithdrawRepositoryMem) FindByUserId(userId string) ([]model.UserBalanceWithdraw, error) {
+func (r UserBalanceWithdrawRepositoryMem) FindByUserID(userId string) ([]model.UserBalanceWithdraw, error) {
 	if _, isExist := r.userWithdraws[userId]; !isExist {
 		return make([]model.UserBalanceWithdraw, 0), nil
 	}
 	return r.userWithdraws[userId], nil
 }
 
-func (r UserBalanceWithdrawRepositoryMem) SumWithdrawByUserId(userId string) float64 {
+func (r UserBalanceWithdrawRepositoryMem) SumWithdrawByUserID(userID string) (float64, error) {
 	sum := 0.0
-	for _, userWithDraw := range r.userWithdraws[userId] {
+	for _, userWithDraw := range r.userWithdraws[userID] {
 		sum += userWithDraw.GetSum()
 	}
-	return sum
+	return sum, nil
 }
 
 func NewUserBalanceWithdrawRepositoryMem() IUserBalanceWithdrawRepository {

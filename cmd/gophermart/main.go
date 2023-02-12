@@ -49,7 +49,7 @@ func main() {
 	userRepository := repository.NewUserRepositoryPG(dbConnection)
 	userOrderRepository := repository.NewUserOrderRepositoryPG(dbConnection)
 	userBalanceRepository := repository.NewUserBalanceRepositoryPG(dbConnection)
-	userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
+	userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryPG(dbConnection)
 
 	authenticator := security.NewAuthenticator(userRepository)
 
@@ -70,7 +70,7 @@ func main() {
 	)
 	//userOrderService.AddOrder("1", "109")
 
-	userRegisterHandler := handlers.NewUserRegisterHandler(userRepository)
+	userRegisterHandler := handlers.NewUserRegisterHandler(userRepository, authenticator)
 	userLoginHandler := handlers.NewUserLoginHandler(userRepository, authenticator)
 	userOrderPOSTHandler := handlers.NewUserOrderPOSTHandler(userOrderService, authenticator)
 	userOrderGETHandler := handlers.NewUserOrdersGETHandler(userOrderRepository, authenticator)

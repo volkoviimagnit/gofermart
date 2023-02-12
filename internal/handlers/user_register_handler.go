@@ -8,6 +8,7 @@ import (
 	"github.com/volkoviimagnit/gofermart/internal/handlers/response"
 	"github.com/volkoviimagnit/gofermart/internal/repository"
 	"github.com/volkoviimagnit/gofermart/internal/repository/model"
+	"github.com/volkoviimagnit/gofermart/internal/security"
 )
 
 type UserRegisterHandler struct {
@@ -15,9 +16,11 @@ type UserRegisterHandler struct {
 	userRepository repository.IUserRepository
 }
 
-func NewUserRegisterHandler(repository repository.IUserRepository) *UserRegisterHandler {
+func NewUserRegisterHandler(repository repository.IUserRepository, auth security.IAuthenticator) *UserRegisterHandler {
+	abstract := NewAbstractHandler(http.MethodPost, "/api/user/register", "application/json")
+	abstract.SetAuthenticator(auth)
 	return &UserRegisterHandler{
-		parent:         NewAbstractHandler(http.MethodPost, "/api/user/register", "application/json"),
+		parent:         abstract,
 		userRepository: repository,
 	}
 }
@@ -69,9 +72,11 @@ func (h *UserRegisterHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	accessToken := h.parent.auth.CreateAuthenticatedToken()
 	user = &model.User{}
 	user.SetLogin(dto.Login)
 	user.SetPassword(dto.Password)
+	user.SetToken(accessToken)
 	errRepository := h.userRepository.Insert(*user)
 	if errRepository != nil {
 		resp.SetStatus(http.StatusInternalServerError).SetBody([]byte(errRepository.Error()))
@@ -80,6 +85,7 @@ func (h *UserRegisterHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 	}
 
 	resp.SetStatus(http.StatusOK).SetBody([]byte(""))
+	h.parent.auth.RenderAuthenticatedToken(rw, accessToken)
 	h.parent.Render(rw, resp)
 }
 

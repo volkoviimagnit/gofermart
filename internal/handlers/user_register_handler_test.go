@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,8 +10,6 @@ import (
 	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/test"
 	"github.com/volkoviimagnit/gofermart/internal/helpers"
-	"github.com/volkoviimagnit/gofermart/internal/repository"
-	"github.com/volkoviimagnit/gofermart/internal/server"
 )
 
 func TestUserRegisterHandler_ServeHTTP(t *testing.T) {
@@ -76,25 +73,18 @@ func TestUserRegisterHandler_ServeHTTP(t *testing.T) {
 		},
 	}
 
-	userRepository := repository.NewUserRepositoryMem()
-	userRegisterHandler := NewUserRegisterHandler(userRepository)
-	handlerCollection := server.NewHandlerCollection()
-	handlerCollection.AddHandler(userRegisterHandler)
-
-	router := server.NewRouterChi(handlerCollection, true)
-	ts := httptest.NewServer(router.GetHandler())
-
 	testEnvironment := NewTestEnvironment()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			body, errMarshaling := json.Marshal(tt.request.DTO)
 			require.NoError(t, errMarshaling)
-			registerResponse := testEnvironment.ServeHandler(testEnvironment.userRegisterHandler, body)
-			assert.Equal(t, tt.expected.StatusCode, registerResponse.StatusCode)
-			errClosing := registerResponse.Body.Close()
+
+			response := testEnvironment.ServeHandler(testEnvironment.userRegisterHandler, body)
+			assert.Equal(t, tt.expected.StatusCode, response.StatusCode)
+
+			errClosing := response.Body.Close()
 			assert.NoError(t, errClosing)
 		})
 	}
-	defer ts.Close()
 }

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -97,23 +98,30 @@ func (u *UserBalanceService) RecalculateByOrderNumber(orderNumber string) error 
 }
 
 func (u *UserBalanceService) RecalculateByUserID(userID string) error {
-	userBalance, errBalance := u.userBalanceRepository.FinOneByUserID(userID)
+	userBalance, errBalance := u.GetUserBalance(userID)
 	if errBalance != nil {
 		return errBalance
+	}
+	userBalanceRow, ok := userBalance.(*model.UserBalance)
+	if !ok {
+		return errors.New("RecalculateByUserID - не удалось привести баланс")
 	}
 
 	orderProcessedSum, errProcessedSum := u.userOrderRepository.SumAccrualByUserID(userID)
 	if errProcessedSum != nil {
 		return errProcessedSum
 	}
-	orderWithdrawSum := u.userBalanceWithdrawRepository.SumWithdrawByUserId(userID)
+	orderWithdrawSum, errWithdrawSum := u.userBalanceWithdrawRepository.SumWithdrawByUserID(userID)
+	if errWithdrawSum != nil {
+		return errWithdrawSum
+	}
 	current := orderProcessedSum - orderWithdrawSum
 	if current < 0 {
 		current = 0
 	}
-	userBalance.SetCurrent(current)
-	userBalance.SetWithdrawn(orderWithdrawSum)
-	errBalanceUpdating := u.userBalanceRepository.Update(*userBalance)
+	userBalanceRow.SetCurrent(current)
+	userBalanceRow.SetWithdrawn(orderWithdrawSum)
+	errBalanceUpdating := u.userBalanceRepository.Update(*userBalanceRow)
 	if errBalanceUpdating != nil {
 		return errBalanceUpdating
 	}

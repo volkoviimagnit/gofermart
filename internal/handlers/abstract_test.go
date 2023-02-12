@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/volkoviimagnit/gofermart/internal/client"
+	clientResponse "github.com/volkoviimagnit/gofermart/internal/client/response"
 	"github.com/volkoviimagnit/gofermart/internal/config"
 	"github.com/volkoviimagnit/gofermart/internal/db"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
@@ -43,6 +45,7 @@ type TestEnvironment struct {
 	userBalanceWithdrawHandler *UserBalanceWithdrawHandler
 	userWithdrawalsHandler     *UserWithdrawalsHandler
 	userBalanceService         service.IUserBalanceService
+	userOrderService           service.IUserOrderService
 	userRepository             repository.IUserRepository
 	testServer                 *httptest.Server
 }
@@ -87,8 +90,9 @@ func (env *TestEnvironment) CreateRandomUser(t *testing.T) (string, string) {
 
 	user, errFindingUser := env.userRepository.FindOneByLogin(randomLogin)
 	assert.NoError(t, errFindingUser)
-	_, errBalancing := env.userBalanceService.SetUserBalance(user.GetID(), math.MaxFloat32, 0)
+	userBalance, errBalancing := env.userBalanceService.SetUserBalance(user.GetID(), math.MaxFloat32, 0)
 	assert.NoError(t, errBalancing)
+	assert.True(t, userBalance.GetCurrent() == math.MaxFloat32)
 
 	return randomLogin, randomPassword
 }
@@ -113,6 +117,15 @@ func (env *TestEnvironment) CreateUserOrders(accessToken string, count int) ([]*
 			return nil, errors.New("не удалось создать заказ")
 		}
 	}
+
+	for _, DTO := range DTOs {
+		accrual := 10000.0
+		err := env.userOrderService.Update(DTO.GetNumber(), clientResponse.AccrualStatusProcessed, &accrual)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return DTOs, nil
 }
 
@@ -133,7 +146,7 @@ func (env *TestEnvironment) CreateUserBalanceWithdraw(accessToken string, orderN
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, errors.New("не удалось создать списание средств")
+		return nil, errors.New(fmt.Sprintf("не удалось создать списание средств - code: %s", response.Status))
 	}
 	return userBalanceWithdrawDTO, nil
 }
@@ -210,7 +223,7 @@ func NewTestEnvironment() *TestEnvironment {
 	)
 	//userOrderService.AddOrder("1", "109")
 
-	userRegisterHandler := NewUserRegisterHandler(userRepository)
+	userRegisterHandler := NewUserRegisterHandler(userRepository, authenticator)
 	userLoginHandler := NewUserLoginHandler(userRepository, authenticator)
 	userOrderPOSTHandler := NewUserOrderPOSTHandler(userOrderService, authenticator)
 	userOrderGETHandler := NewUserOrdersGETHandler(userOrderRepository, authenticator)
@@ -241,6 +254,7 @@ func NewTestEnvironment() *TestEnvironment {
 		userBalanceWithdrawHandler: userBalanceWithdrawHandler,
 		userWithdrawalsHandler:     userWithdrawalsHandler,
 		userBalanceService:         userBalanceService,
+		userOrderService:           userOrderService,
 		userRepository:             userRepository,
 		testServer:                 ts,
 	}
