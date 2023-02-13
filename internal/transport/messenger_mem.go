@@ -38,7 +38,7 @@ func (m *MessengerMem) Consume(idx int, queueName string) {
 		c := consumer
 		go func() {
 			for {
-				<-time.After(1 * time.Second)
+				<-time.After(100 * time.Millisecond)
 				qName := c.GetQueueName()
 				//logrus.Debugf("Опрос очереди %d - %s", consumerId, qName)
 				firstMessage := m.QueuePop(qName)

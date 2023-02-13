@@ -97,3 +97,18 @@ go get -u github.com/jackc/pgx/v4
 go mod tidy
 
 go build -o main && chmod +x main && LOG_LEVEL=trace DATABASE_URI=databaseEnv RUN_ADDRESS=runEnv ACCRUAL_SYSTEM_ADDRESS=accEnv ./main -a=localhostArg -d=databaseArg -r=accrualArg -ll=debug
+
+
+cd /Users/volkov_ii/Projects/gofermart/cmd/gophermart && go build -buildvcs=false -o gophermart && \
+cd /Users/volkov_ii/Projects/gofermart && chmod -R +x cmd/gophermart/gophermart && \
+cd /Users/volkov_ii/Projects/gofermart && SERVER_PORT=$((8000+($RANDOM % 1000))) .tools/gophermarttest-darwin-arm64 \
+-test.v -test.run=^TestGophermart$ \
+-gophermart-binary-path=cmd/gophermart/gophermart \
+-gophermart-host=localhost \
+-gophermart-port=8081 \
+-gophermart-database-uri="postgres://postgres:postgres@127.0.0.1:5433/gofermart?sslmode=disable" \
+-accrual-binary-path=cmd/accrual/accrual_darwin_arm64 \
+-accrual-host=localhost \
+-accrual-port=8080 \
+-accrual-database-uri="postgres://postgres:postgres@127.0.0.1:5433/gofermart?sslmode=disable" \
+echo 'ok'
