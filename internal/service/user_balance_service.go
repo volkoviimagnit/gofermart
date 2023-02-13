@@ -50,7 +50,7 @@ func (u *UserBalanceService) AddUserWithdraw(userID string, orderNumber string, 
 	}
 
 	userBalanceWithdrawModel := model.UserBalanceWithdraw{
-		UserId:      userID,
+		UserID:      userID,
 		OrderNumber: orderNumber,
 		Sum:         sum,
 		ProcessedAt: time.Now(),

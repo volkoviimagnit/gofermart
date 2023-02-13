@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,7 +17,6 @@ import (
 	"github.com/volkoviimagnit/gofermart/internal/client"
 	clientResponse "github.com/volkoviimagnit/gofermart/internal/client/response"
 	"github.com/volkoviimagnit/gofermart/internal/config"
-	"github.com/volkoviimagnit/gofermart/internal/db"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/test"
 	"github.com/volkoviimagnit/gofermart/internal/helpers"
@@ -146,7 +144,7 @@ func (env *TestEnvironment) CreateUserBalanceWithdraw(accessToken string, orderN
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("не удалось создать списание средств - code: %s", response.Status))
+		return nil, fmt.Errorf("не удалось создать списание средств - code: %s", response.Status)
 	}
 	return userBalanceWithdrawDTO, nil
 }
@@ -186,23 +184,19 @@ func NewTestEnvironment() *TestEnvironment {
 	if errConf != nil {
 		logrus.Fatalf("ошибка cбора настроек - %s", errConf)
 	}
-	dbConnection := db.NewConnectionPostgres(context.Background(), "postgres://postgres:postgres@127.0.0.1:5433/gofermart")
-	dbConnectionError := dbConnection.TryConnect()
-	if dbConnectionError != nil {
-		logrus.Fatalf("ошибка соединения с БД - %s", dbConnectionError)
-	}
-
 	messenger := transport.NewMessengerMem()
 
-	//userRepository := repository.NewUserRepositoryMem()
-	//userOrderRepository := repository.NewUserOrderRepositoryMem()
-	//userBalanceRepository := repository.NewUserBalanceRepositoryMem()
-	//userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
-
-	userRepository := repository.NewUserRepositoryPG(dbConnection)
-	userOrderRepository := repository.NewUserOrderRepositoryPG(dbConnection)
-	userBalanceRepository := repository.NewUserBalanceRepositoryPG(dbConnection)
+	userRepository := repository.NewUserRepositoryMem()
+	userOrderRepository := repository.NewUserOrderRepositoryMem()
+	userBalanceRepository := repository.NewUserBalanceRepositoryMem()
 	userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
+
+	/*
+		userRepository := repository.NewUserRepositoryPG(dbConnection)
+		userOrderRepository := repository.NewUserOrderRepositoryPG(dbConnection)
+		userBalanceRepository := repository.NewUserBalanceRepositoryPG(dbConnection)
+		userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryPG(dbConnection)
+	*/
 
 	authenticator := security.NewAuthenticator(userRepository)
 
@@ -213,9 +207,9 @@ func NewTestEnvironment() *TestEnvironment {
 		messenger,
 	)
 
-	accrualHttpClient := client.NewAccrualHttpClient(params.GetAccrualSystemAddress())
+	accrualHTTPClient := client.NewAccrualHTTPClient(params.GetAccrualSystemAddress())
 	userOrderService := service.NewUserOrderService(
-		accrualHttpClient,
+		accrualHTTPClient,
 		messenger,
 		userOrderRepository,
 		userBalanceRepository,

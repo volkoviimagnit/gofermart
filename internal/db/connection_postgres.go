@@ -3,6 +3,10 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -43,7 +47,6 @@ func (s *ConnectionPostgres) Query(sql string, arguments ...any) (pgx.Rows, erro
 	return s.conn.Query(s.ctx, sql, arguments...)
 }
 
-// tryConnect
 func (s *ConnectionPostgres) TryConnect() error {
 	if s.conn != nil {
 		return nil
@@ -68,5 +71,25 @@ func (s *ConnectionPostgres) TryConnect() error {
 		return errors.New("did not transcode date successfully")
 	}
 
+	return nil
+}
+
+func (s *ConnectionPostgres) Migrate() error {
+	errConnection := s.TryConnect()
+	if errConnection != nil {
+		return errConnection
+	}
+	_, b, _, _ := runtime.Caller(0)
+	schemaDir := filepath.Dir(b)
+
+	schemaFilePath := fmt.Sprintf("%s/%s", schemaDir, "schema.sql")
+	c, ioErr := os.ReadFile(schemaFilePath)
+	if ioErr != nil {
+		return ioErr
+	}
+	_, errExecuting := s.conn.Exec(s.ctx, string(c))
+	if errExecuting != nil {
+		return errExecuting
+	}
 	return nil
 }

@@ -38,13 +38,12 @@ func main() {
 	if dbConnectionError != nil {
 		logrus.Fatalf("ошибка соединения с БД - %s", dbConnectionError)
 	}
+	errMigrating := dbConnection.Migrate()
+	if errMigrating != nil {
+		logrus.Fatalf("ошибка миграций БД - %s", dbConnectionError)
+	}
 
 	messenger := transport.NewMessengerMem()
-
-	//userRepository := repository.NewUserRepositoryMem()
-	//userOrderRepository := repository.NewUserOrderRepositoryMem()
-	//userBalanceRepository := repository.NewUserBalanceRepositoryMem()
-	//userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryMem()
 
 	userRepository := repository.NewUserRepositoryPG(dbConnection)
 	userOrderRepository := repository.NewUserOrderRepositoryPG(dbConnection)
@@ -60,7 +59,7 @@ func main() {
 		messenger,
 	)
 
-	accrualHTTPClient := client.NewAccrualHttpClient(params.GetAccrualSystemAddress())
+	accrualHTTPClient := client.NewAccrualHTTPClient(params.GetAccrualSystemAddress())
 	userOrderService := service.NewUserOrderService(
 		accrualHTTPClient,
 		messenger,

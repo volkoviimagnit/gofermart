@@ -79,5 +79,4 @@ func (h *UserWithdrawalsHandler) ServeHTTP(rw http.ResponseWriter, request *http
 	resp := response.NewResponse(h.parent.contentType)
 	resp.SetStatus(http.StatusOK).SetBody(body)
 	h.parent.Render(rw, resp)
-	return
 }

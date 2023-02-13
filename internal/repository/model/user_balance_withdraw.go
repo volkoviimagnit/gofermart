@@ -3,14 +3,14 @@ package model
 import "time"
 
 type UserBalanceWithdraw struct {
-	UserId      string
+	UserID      string
 	OrderNumber string
 	Sum         float64
 	ProcessedAt time.Time
 }
 
-func (m *UserBalanceWithdraw) GetUserId() string {
-	return m.UserId
+func (m *UserBalanceWithdraw) GetUserID() string {
+	return m.UserID
 }
 
 func (m *UserBalanceWithdraw) GetOrderNumber() string {

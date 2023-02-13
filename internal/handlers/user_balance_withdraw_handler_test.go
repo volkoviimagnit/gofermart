@@ -24,7 +24,7 @@ func TestUserBalanceWithdrawHandler_ServeHTTP(t *testing.T) {
 	maxUserBalanceWithdraw.Sum = math.MaxFloat64
 
 	badUserBalanceWithdraw := request.NewUserBalanceWithdrawDTO()
-	badUserBalanceWithdraw.OrderNumber = helpers.RandomDigits(9)
+	badUserBalanceWithdraw.OrderNumber = "1"
 	badUserBalanceWithdraw.Sum = 1
 
 	tests := []struct {
@@ -71,6 +71,9 @@ func TestUserBalanceWithdrawHandler_ServeHTTP(t *testing.T) {
 
 			response := testEnvironment.ServeHandler(testEnvironment.userBalanceWithdrawHandler, body, accessToken)
 			assert.Equal(t, tt.expectedStatusCode, response.StatusCode)
+
+			errClosing := response.Body.Close()
+			assert.NoError(t, errClosing)
 		})
 	}
 }

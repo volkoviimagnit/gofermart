@@ -20,14 +20,14 @@ func (u *UserBalanceWithdrawRepositoryPG) Insert(row model.UserBalanceWithdraw) 
 	sqlRequest := `INSERT INTO public."user_balance_withdraw" (user_id, order_number, sum, processed_at)
 	VALUES ($1, $2, $3, $4);`
 
-	errExecuting := u.conn.Exec(sqlRequest, row.GetUserId(), row.GetOrderNumber(), row.GetSum(), row.GetProcessedAt())
+	errExecuting := u.conn.Exec(sqlRequest, row.GetUserID(), row.GetOrderNumber(), row.GetSum(), row.GetProcessedAt())
 	return errExecuting
 }
 
 func (u *UserBalanceWithdrawRepositoryPG) FindByUserID(userID string) ([]model.UserBalanceWithdraw, error) {
 	entities := make([]model.UserBalanceWithdraw, 0)
 
-	request := `SELECT user_id, number, status, accrual, uploaded_at FROM public.user_order WHERE user_id = $1 ORDER BY uploaded_at ASC`
+	request := `SELECT user_id, order_number, sum, processed_at FROM public.user_balance_withdraw WHERE user_id = $1 ORDER BY processed_at ASC`
 	rows, errConnection := u.conn.Query(request, userID)
 	if errConnection != nil {
 		return nil, errConnection
@@ -66,7 +66,7 @@ func (u *UserBalanceWithdrawRepositoryPG) SumWithdrawByUserID(userID string) (fl
 func (u *UserBalanceWithdrawRepositoryPG) prepareModel(row pgx.Row) (*model.UserBalanceWithdraw, error) {
 	userBalanceWithdraw := model.UserBalanceWithdraw{}
 
-	err := row.Scan(&userBalanceWithdraw.UserId, &userBalanceWithdraw.OrderNumber, &userBalanceWithdraw.Sum, &userBalanceWithdraw.ProcessedAt)
+	err := row.Scan(&userBalanceWithdraw.UserID, &userBalanceWithdraw.OrderNumber, &userBalanceWithdraw.Sum, &userBalanceWithdraw.ProcessedAt)
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}

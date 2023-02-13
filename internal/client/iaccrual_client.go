@@ -3,7 +3,7 @@ package client
 import "time"
 
 type IAccrualClient interface {
-	GetOrderStatus(orderId string) (IAccrualOrderStatus, IError)
+	GetOrderStatus(orderNumber string) (IAccrualOrderStatus, IError)
 	GetDefaultRetryAfterSeconds() time.Duration
 }
 

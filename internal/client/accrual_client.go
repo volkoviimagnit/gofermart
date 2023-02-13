@@ -11,19 +11,19 @@ import (
 	"github.com/volkoviimagnit/gofermart/internal/client/response"
 )
 
-type AccrualHttpClient struct {
+type AccrualHTTPClient struct {
 	host string
 }
 
-func NewAccrualHttpClient(host string) IAccrualClient {
-	return &AccrualHttpClient{host: host}
+func NewAccrualHTTPClient(host string) IAccrualClient {
+	return &AccrualHTTPClient{host: host}
 }
 
-func (a *AccrualHttpClient) GetDefaultRetryAfterSeconds() time.Duration {
+func (a *AccrualHTTPClient) GetDefaultRetryAfterSeconds() time.Duration {
 	return 60
 }
 
-func (a *AccrualHttpClient) GetOrderStatus(orderId string) (IAccrualOrderStatus, IError) {
+func (a *AccrualHTTPClient) GetOrderStatus(orderNumber string) (IAccrualOrderStatus, IError) {
 	client := resty.New()
 	client.SetRetryCount(3).
 		SetRetryWaitTime(10*time.Second).
@@ -31,7 +31,7 @@ func (a *AccrualHttpClient) GetOrderStatus(orderId string) (IAccrualOrderStatus,
 		SetHeader("Accept-Encoding", "gzip,deflate")
 
 	var body []byte
-	var url = a.host + "/api/orders/" + orderId
+	var url = a.host + "/api/orders/" + orderNumber
 	restyResponse, respError := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(body).
@@ -41,7 +41,7 @@ func (a *AccrualHttpClient) GetOrderStatus(orderId string) (IAccrualOrderStatus,
 		return nil, &UndefinedError{err: respError}
 	}
 
-	logrus.Warningf("%s %d", orderId, restyResponse.StatusCode())
+	logrus.Warningf("%s %d", orderNumber, restyResponse.StatusCode())
 
 	switch restyResponse.StatusCode() {
 	case http.StatusOK:
@@ -65,26 +65,26 @@ func (a *AccrualHttpClient) GetOrderStatus(orderId string) (IAccrualOrderStatus,
 			retryAfter = time.Duration(headerRetryAfter)
 		}
 		return nil, &StatusTooManyRequestsError{
-			retryAfterSeconds: retryAfter,
+			retryAfter: retryAfter,
 		}
 	default:
 		return nil, &InternalServerError{
-			retryAfterSeconds: a.GetDefaultRetryAfterSeconds(),
+			retryAfter: a.GetDefaultRetryAfterSeconds(),
 		}
 	}
 
 }
 
 type InternalServerError struct {
-	retryAfterSeconds time.Duration
+	retryAfter time.Duration
 }
 
 func (e *InternalServerError) NeedRetry() bool {
-	return e.retryAfterSeconds > 0
+	return e.retryAfter > 0
 }
 
 func (e *InternalServerError) RetryAfterSeconds() time.Duration {
-	return e.retryAfterSeconds
+	return e.retryAfter
 }
 
 func (e *InternalServerError) Error() string {
@@ -106,15 +106,15 @@ func (e *StatusNoContentError) RetryAfterSeconds() time.Duration {
 }
 
 type StatusTooManyRequestsError struct {
-	retryAfterSeconds time.Duration
+	retryAfter time.Duration
 }
 
 func (e *StatusTooManyRequestsError) NeedRetry() bool {
-	return e.retryAfterSeconds > 0
+	return e.retryAfter > 0
 }
 
 func (e *StatusTooManyRequestsError) RetryAfterSeconds() time.Duration {
-	return e.retryAfterSeconds
+	return e.retryAfter
 }
 
 func (e *StatusTooManyRequestsError) Error() string {

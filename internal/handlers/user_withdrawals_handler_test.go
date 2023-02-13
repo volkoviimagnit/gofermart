@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -43,9 +42,6 @@ func TestUserWithdrawalsHandler_ServeHTTP_Negative_Positive(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			accessToken := testEnvironment.CreateAndAuthorizeRandomUser(t)
-			fmt.Println("===")
-			fmt.Println(accessToken)
-			fmt.Println("===")
 			createdOrderDTOs, errOrderCreating := testEnvironment.CreateUserOrders(accessToken, needOrders)
 			assert.NoError(t, errOrderCreating)
 			assert.Equal(t, len(createdOrderDTOs), needOrders)
@@ -109,6 +105,9 @@ func TestUserWithdrawalsHandler_ServeHTTP_Other(t *testing.T) {
 				}
 			}(jsonResponse.Body)
 			assert.Equal(t, http.StatusUnauthorized, jsonResponse.StatusCode)
+
+			errClosing := jsonResponse.Body.Close()
+			assert.NoError(t, errClosing)
 		})
 	}
 }

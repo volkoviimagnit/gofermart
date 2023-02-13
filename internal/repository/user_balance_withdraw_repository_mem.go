@@ -7,7 +7,7 @@ type UserBalanceWithdrawRepositoryMem struct {
 }
 
 func (r UserBalanceWithdrawRepositoryMem) Insert(row model.UserBalanceWithdraw) error {
-	userID := row.GetUserId()
+	userID := row.GetUserID()
 	if _, isExist := r.userWithdraws[userID]; !isExist {
 		r.userWithdraws[userID] = make([]model.UserBalanceWithdraw, 0)
 	}
@@ -15,11 +15,11 @@ func (r UserBalanceWithdrawRepositoryMem) Insert(row model.UserBalanceWithdraw) 
 	return nil
 }
 
-func (r UserBalanceWithdrawRepositoryMem) FindByUserID(userId string) ([]model.UserBalanceWithdraw, error) {
-	if _, isExist := r.userWithdraws[userId]; !isExist {
+func (r UserBalanceWithdrawRepositoryMem) FindByUserID(userID string) ([]model.UserBalanceWithdraw, error) {
+	if _, isExist := r.userWithdraws[userID]; !isExist {
 		return make([]model.UserBalanceWithdraw, 0), nil
 	}
-	return r.userWithdraws[userId], nil
+	return r.userWithdraws[userID], nil
 }
 
 func (r UserBalanceWithdrawRepositoryMem) SumWithdrawByUserID(userID string) (float64, error) {

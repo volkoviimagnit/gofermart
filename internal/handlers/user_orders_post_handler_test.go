@@ -34,7 +34,7 @@ func TestUserOrdersPOSTHandler_ServeHTTP_Negative(t *testing.T) {
 		},
 		{
 			name:               "неверный формат номера заказа - 422",
-			dto:                request.NewUserOrdersPOSTDTO(helpers.RandomDigits(10)),
+			dto:                request.NewUserOrdersPOSTDTO(helpers.RandomDigits(1)),
 			expectedStatusCode: http.StatusUnprocessableEntity,
 			needToken:          true,
 		},
