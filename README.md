@@ -23,3 +23,33 @@ git fetch template && git checkout template/master .github
 ```
 
 Затем добавьте полученные изменения в свой репозиторий.
+
+
+# Схема БД
+
+user
+- id 
+- login string not null
+- password string not null
+- token string null
+
+user_order
+- user.id string not null
+- order_id string not null
+- status_id string not null
+- uploaded_at timestamp not null
+- accrual int null
+unique key user.id + order_id
+unique key order_id
+
+user_balance
+- user.id
+- balance float not null
+- withdrawn float not null
+
+user_withdrawn
+- user.id
+- order_id string not null
+- sum float not null
+- processed_at timestamp not null
+
