@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
-	"github.com/volkoviimagnit/gofermart/internal/handlers/test"
 	"github.com/volkoviimagnit/gofermart/internal/helpers"
+	"github.com/volkoviimagnit/gofermart/tests/handlers/structs"
 )
 
 func TestUserRegisterHandler_ServeHTTP(t *testing.T) {
@@ -18,56 +18,56 @@ func TestUserRegisterHandler_ServeHTTP(t *testing.T) {
 	tests := []UserTestCase{
 		{
 			name: "Корректная регистрация - 200",
-			request: test.UserRequest{
+			request: structs.UserRequest{
 				DTO: request.UserDTO{
 					Login:    randomLogin,
 					Password: randomPassword,
 				},
 			},
-			expected: test.Expected{
+			expected: structs.Expected{
 				StatusCode: http.StatusOK,
 			},
 		},
 		{
 			name: "Без логина - 400",
-			request: test.UserRequest{
+			request: structs.UserRequest{
 				DTO: request.UserDTO{
 					Password: helpers.RandomString(10),
 				},
 			},
-			expected: test.Expected{
+			expected: structs.Expected{
 				StatusCode: http.StatusBadRequest,
 			},
 		},
 		{
 			name: "Без пароля - 400",
-			request: test.UserRequest{
+			request: structs.UserRequest{
 				DTO: request.UserDTO{
 					Login: helpers.RandomString(10),
 				},
 			},
-			expected: test.Expected{
+			expected: structs.Expected{
 				StatusCode: http.StatusBadRequest,
 			},
 		},
 		{
 			name: "Без тела - 400",
-			request: test.UserRequest{
+			request: structs.UserRequest{
 				DTO: request.UserDTO{},
 			},
-			expected: test.Expected{
+			expected: structs.Expected{
 				StatusCode: http.StatusBadRequest,
 			},
 		},
 		{
 			name: "Повторная регистрация - 409",
-			request: test.UserRequest{
+			request: structs.UserRequest{
 				DTO: request.UserDTO{
 					Login:    randomLogin,
 					Password: randomPassword,
 				},
 			},
-			expected: test.Expected{
+			expected: structs.Expected{
 				StatusCode: http.StatusConflict,
 			},
 		},
@@ -80,7 +80,7 @@ func TestUserRegisterHandler_ServeHTTP(t *testing.T) {
 			body, errMarshaling := json.Marshal(tt.request.DTO)
 			require.NoError(t, errMarshaling)
 
-			response := testEnvironment.ServeHandler(testEnvironment.userRegisterHandler, body)
+			response := testEnvironment.ServeHandler(testEnvironment.UserRegisterHandler, body)
 			assert.Equal(t, tt.expected.StatusCode, response.StatusCode)
 
 			errClosing := response.Body.Close()

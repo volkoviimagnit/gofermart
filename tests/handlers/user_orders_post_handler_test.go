@@ -56,7 +56,7 @@ func TestUserOrdersPOSTHandler_ServeHTTP_Negative(t *testing.T) {
 			body, errSerializing := tt.dto.Serialize()
 			require.NoError(t, errSerializing)
 
-			response := testEnvironment.ServeHandler(testEnvironment.userOrderPOSTHandler, body, accessToken)
+			response := testEnvironment.ServeHandler(testEnvironment.UserOrderPOSTHandler, body, accessToken)
 			err := response.Body.Close()
 			assert.NoError(t, err)
 
@@ -78,7 +78,7 @@ func TestUserOrdersPOSTHandler_ServeHTTP_DuplicatedNumber(t *testing.T) {
 			body, errSerializing := orderDTO.Serialize()
 			require.NoError(t, errSerializing)
 
-			response := testEnvironment.ServeHandler(testEnvironment.userOrderPOSTHandler, body, anotherAccessToken)
+			response := testEnvironment.ServeHandler(testEnvironment.UserOrderPOSTHandler, body, anotherAccessToken)
 			err := response.Body.Close()
 			assert.NoError(t, err)
 
@@ -106,7 +106,7 @@ func TestUserOrdersPOSTHandler_ServeHTTP_Positive(t *testing.T) {
 			body, errMarshaling := orderDTO.Serialize()
 			require.NoError(t, errMarshaling)
 
-			response := testEnvironment.ServeHandler(testEnvironment.userOrderPOSTHandler, body, accessToken)
+			response := testEnvironment.ServeHandler(testEnvironment.UserOrderPOSTHandler, body, accessToken)
 			err := response.Body.Close()
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedStatusCode, response.StatusCode)

@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/response"
-	"github.com/volkoviimagnit/gofermart/internal/handlers/test"
+	"github.com/volkoviimagnit/gofermart/tests/handlers/structs"
 )
 
 func TestUserBalanceHandler_ServeHTTP(t *testing.T) {
@@ -16,19 +16,19 @@ func TestUserBalanceHandler_ServeHTTP(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		expected    test.Expected
+		expected    structs.Expected
 		needAuth    bool
 		errDecoding error
 	}{
 		{
 			name:        "успешная обработка запроса - 200",
-			expected:    test.Expected{StatusCode: http.StatusOK},
+			expected:    structs.Expected{StatusCode: http.StatusOK},
 			needAuth:    true,
 			errDecoding: nil,
 		},
 		{
 			name:        "пользователь не авторизован - 401",
-			expected:    test.Expected{StatusCode: http.StatusUnauthorized},
+			expected:    structs.Expected{StatusCode: http.StatusUnauthorized},
 			needAuth:    false,
 			errDecoding: io.EOF,
 		},
@@ -40,7 +40,7 @@ func TestUserBalanceHandler_ServeHTTP(t *testing.T) {
 				accessToken = testEnvironment.CreateAndAuthorizeRandomUser(t)
 			}
 
-			jsonResponse := testEnvironment.ServeHandler(testEnvironment.userBalanceHandler, []byte(""), accessToken)
+			jsonResponse := testEnvironment.ServeHandler(testEnvironment.UserBalanceHandler, []byte(""), accessToken)
 			err := jsonResponse.Body.Close()
 			assert.NoError(t, err)
 			defer func(Body io.ReadCloser) {

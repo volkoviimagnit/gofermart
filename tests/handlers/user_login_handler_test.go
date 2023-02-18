@@ -8,14 +8,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/volkoviimagnit/gofermart/internal/handlers/request"
-	"github.com/volkoviimagnit/gofermart/internal/handlers/test"
 	"github.com/volkoviimagnit/gofermart/internal/helpers"
+	"github.com/volkoviimagnit/gofermart/tests/handlers/structs"
 )
 
 func TestUserLoginHandler_ServeHTTP_Negative(t *testing.T) {
 	testEnvironment := NewTestEnvironment()
 
-	ts := testEnvironment.testServer
+	ts := testEnvironment.TestServer
 	defer ts.Close()
 
 	tests := getNegativeTestCases()
@@ -24,7 +24,7 @@ func TestUserLoginHandler_ServeHTTP_Negative(t *testing.T) {
 			body, errMarshaling := json.Marshal(tt.request.DTO)
 			require.NoError(t, errMarshaling)
 
-			response := testEnvironment.ServeHandler(testEnvironment.userLoginHandler, body)
+			response := testEnvironment.ServeHandler(testEnvironment.UserLoginHandler, body)
 			assert.Equal(t, tt.expected.StatusCode, response.StatusCode)
 
 			errClosing := response.Body.Close()
@@ -35,7 +35,7 @@ func TestUserLoginHandler_ServeHTTP_Negative(t *testing.T) {
 
 func TestUserLoginHandler_ServeHTTP_Positive(t *testing.T) {
 	testEnvironment := NewTestEnvironment()
-	ts := testEnvironment.testServer
+	ts := testEnvironment.TestServer
 	defer ts.Close()
 
 	testEnvironment.CreateAndAuthorizeRandomUser(t)
@@ -45,10 +45,10 @@ func getNegativeTestCases() []UserTestCase {
 	return []UserTestCase{
 		{
 			name: "неверная пара логин/пароль - 401",
-			expected: test.Expected{
+			expected: structs.Expected{
 				StatusCode: http.StatusUnauthorized,
 			},
-			request: test.UserRequest{
+			request: structs.UserRequest{
 				DTO: request.UserDTO{
 					Login:    helpers.RandomString(10),
 					Password: helpers.RandomString(10),
@@ -58,10 +58,10 @@ func getNegativeTestCases() []UserTestCase {
 		},
 		{
 			name: "неверный формат запроса, без пароля - 400",
-			expected: test.Expected{
+			expected: structs.Expected{
 				StatusCode: http.StatusBadRequest,
 			},
-			request: test.UserRequest{
+			request: structs.UserRequest{
 				DTO: request.UserDTO{
 					Login: "test",
 				},
@@ -70,10 +70,10 @@ func getNegativeTestCases() []UserTestCase {
 		},
 		{
 			name: "неверный формат запроса, без логина - 400",
-			expected: test.Expected{
+			expected: structs.Expected{
 				StatusCode: http.StatusBadRequest,
 			},
-			request: test.UserRequest{
+			request: structs.UserRequest{
 				DTO: request.UserDTO{
 					Password: "test",
 				},
@@ -82,10 +82,10 @@ func getNegativeTestCases() []UserTestCase {
 		},
 		{
 			name: "неверный формат запроса, без логина/пароля - 400",
-			expected: test.Expected{
+			expected: structs.Expected{
 				StatusCode: http.StatusBadRequest,
 			},
-			request: test.UserRequest{
+			request: structs.UserRequest{
 				DTO:         request.UserDTO{},
 				ContentType: "application/json",
 			},

@@ -33,7 +33,7 @@ func (m *MessengerMem) Dispatch(message IMessage) {
 }
 
 // Consume TODO: узнать как это правильно реализовать через каналы?
-func (m *MessengerMem) Consume(idx int, queueName string) {
+func (m *MessengerMem) Consume() {
 	for _, consumer := range m.queueConsumers {
 		c := consumer
 		go func() {
