@@ -96,6 +96,8 @@ go mod tidy
 go build -o main && chmod +x main && LOG_LEVEL=trace DATABASE_URI=databaseEnv RUN_ADDRESS=runEnv ACCRUAL_SYSTEM_ADDRESS=accEnv ./main -a=localhostArg -d=databaseArg -r=accrualArg -ll=debug
 
 
+go vet -vettool=.tools/statictest ./...
+
 cd /Users/volkov_ii/Projects/gofermart/cmd/gophermart && go build -buildvcs=false -o gophermart && \
 cd /Users/volkov_ii/Projects/gofermart && chmod -R +x cmd/gophermart/gophermart && \
 cd /Users/volkov_ii/Projects/gofermart && SERVER_PORT=$((8000+($RANDOM % 1000))) .tools/gophermarttest-darwin-arm64 \
