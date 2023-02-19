@@ -11,7 +11,7 @@ import (
 )
 
 type UserOrdersGETHandler struct {
-	parent       *AbstractHandler
+	*AbstractHandler
 	uoRepository repository.IUserOrderRepository
 }
 
@@ -19,21 +19,9 @@ func NewUserOrdersGETHandler(uoRepository repository.IUserOrderRepository, auth 
 	abstract := NewAbstractHandler(http.MethodGet, "/api/user/orders", "application/json")
 	abstract.SetAuthenticator(auth)
 	return &UserOrdersGETHandler{
-		parent:       abstract,
-		uoRepository: uoRepository,
+		AbstractHandler: abstract,
+		uoRepository:    uoRepository,
 	}
-}
-
-func (h *UserOrdersGETHandler) GetContentType() string {
-	return h.parent.contentType
-}
-
-func (h *UserOrdersGETHandler) GetMethod() string {
-	return h.parent.GetMethod()
-}
-
-func (h *UserOrdersGETHandler) GetPattern() string {
-	return h.parent.GetPattern()
 }
 
 func (h *UserOrdersGETHandler) ServeHTTP(rw http.ResponseWriter, request *http.Request) {
@@ -42,18 +30,18 @@ func (h *UserOrdersGETHandler) ServeHTTP(rw http.ResponseWriter, request *http.R
 	// http.StatusUnauthorized
 	// http.StatusInternalServerError
 
-	passport := h.parent.AuthOrAbort(rw, request)
+	passport := h.AuthOrAbort(rw, request)
 	if passport == nil {
 		return
 	}
 
 	userOrders, errFinding := h.uoRepository.FindByUserID(passport.GetUser().GetID())
 	if errFinding != nil {
-		h.parent.RenderInternalServerError(rw, errFinding)
+		h.RenderInternalServerError(rw, errFinding)
 		return
 	}
 	if len(userOrders) == 0 {
-		h.parent.RenderNoContent(rw)
+		h.RenderNoContent(rw)
 		return
 	}
 
@@ -62,21 +50,21 @@ func (h *UserOrdersGETHandler) ServeHTTP(rw http.ResponseWriter, request *http.R
 
 	for _, userOrder := range userOrders {
 		tempDTO = response.UserOrderDTO{
-			Number:     userOrder.GetNumber(),
-			Status:     userOrder.GetStatus().String(),
-			Accrual:    userOrder.GetAccrual(),
-			UploadedAt: userOrder.GetUploadedAt().Format(time.RFC3339),
+			Number:     userOrder.Number,
+			Status:     userOrder.Status.String(),
+			Accrual:    userOrder.Accrual,
+			UploadedAt: userOrder.UploadedAt.Format(time.RFC3339),
 		}
 		DTOs = append(DTOs, tempDTO)
 	}
 
 	body, errMarshaling := json.Marshal(DTOs)
 	if errMarshaling != nil {
-		h.parent.RenderInternalServerError(rw, errMarshaling)
+		h.RenderInternalServerError(rw, errMarshaling)
 		return
 	}
 
-	resp := response.NewResponse(h.parent.contentType)
+	resp := response.NewResponse(h.contentType)
 	resp.SetStatus(http.StatusOK).SetBody(body)
-	h.parent.Render(rw, resp)
+	h.Render(rw, resp)
 }

@@ -69,7 +69,7 @@ func TestUserBalanceWithdrawHandler_ServeHTTP(t *testing.T) {
 			body, errSerializing := tt.dto.Serialize()
 			require.NoError(t, errSerializing)
 
-			response := testEnvironment.ServeHandler(testEnvironment.userBalanceWithdrawHandler, body, accessToken)
+			response := testEnvironment.ServeHandler(testEnvironment.UserBalanceWithdrawHandler, body, accessToken)
 			assert.Equal(t, tt.expectedStatusCode, response.StatusCode)
 
 			errClosing := response.Body.Close()

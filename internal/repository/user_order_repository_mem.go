@@ -1,46 +1,63 @@
 package repository
 
-import "github.com/volkoviimagnit/gofermart/internal/repository/model"
+import (
+	"sync"
+
+	"github.com/volkoviimagnit/gofermart/internal/repository/model"
+)
 
 type UserOrderRepositoryMem struct {
 	userOrders map[string]map[string]model.UserOrder
+	mutex      *sync.RWMutex
+}
+
+func NewUserOrderRepositoryMem() IUserOrderRepository {
+	return &UserOrderRepositoryMem{
+		userOrders: make(map[string]map[string]model.UserOrder, 0),
+		mutex:      &sync.RWMutex{},
+	}
 }
 
 func (r *UserOrderRepositoryMem) SumAccrualByUserID(userID string) (float64, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
 	sum := 0.0
 	for _, userOrder := range r.userOrders[userID] {
-		if userOrder.GetAccrual() == nil {
+		if userOrder.Accrual == nil {
 			continue
 		}
-		if !userOrder.GetStatus().IsSuitable() {
+		if !userOrder.Status.IsSuitable() {
 			continue
 		}
-		sum += *userOrder.GetAccrual()
+		sum += *userOrder.Accrual
 	}
 	return sum, nil
 }
 
-func NewUserOrderRepositoryMem() IUserOrderRepository {
-	return &UserOrderRepositoryMem{userOrders: make(map[string]map[string]model.UserOrder, 0)}
-}
-
 func (r *UserOrderRepositoryMem) Insert(row model.UserOrder) error {
-	if _, isExist := r.userOrders[row.GetUserID()]; !isExist {
-		r.userOrders[row.GetUserID()] = make(map[string]model.UserOrder, 0)
-	}
-	r.userOrders[row.GetUserID()][row.GetNumber()] = row
-	return nil
+	return r.Upsert(row)
 }
 
 func (r *UserOrderRepositoryMem) Update(row model.UserOrder) error {
-	if _, isExist := r.userOrders[row.GetUserID()]; !isExist {
-		r.userOrders[row.GetUserID()] = make(map[string]model.UserOrder, 0)
+	return r.Upsert(row)
+}
+
+func (r *UserOrderRepositoryMem) Upsert(row model.UserOrder) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	if _, isExist := r.userOrders[row.UserID]; !isExist {
+		r.userOrders[row.UserID] = make(map[string]model.UserOrder, 0)
 	}
-	r.userOrders[row.GetUserID()][row.GetNumber()] = row
+	r.userOrders[row.UserID][row.Number] = row
 	return nil
 }
 
 func (r *UserOrderRepositoryMem) FindByUserID(userID string) ([]model.UserOrder, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
 	if _, isExist := r.userOrders[userID]; !isExist {
 		return make([]model.UserOrder, 0), nil
 	}
@@ -55,9 +72,12 @@ func (r *UserOrderRepositoryMem) FindByUserID(userID string) ([]model.UserOrder,
 }
 
 func (r *UserOrderRepositoryMem) FindOneByNumber(number string) (*model.UserOrder, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
 	for _, orders := range r.userOrders {
 		for _, order := range orders {
-			if order.GetNumber() == number {
+			if order.Number == number {
 				return &order, nil
 			}
 		}

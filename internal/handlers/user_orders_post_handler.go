@@ -11,7 +11,7 @@ import (
 )
 
 type UserOrdersPOSTHandler struct {
-	parent           *AbstractHandler
+	*AbstractHandler
 	userOrderService service.IUserOrderService
 }
 
@@ -19,21 +19,9 @@ func NewUserOrderPOSTHandler(userOrderService service.IUserOrderService, auth se
 	abstract := NewAbstractHandler(http.MethodPost, "/api/user/orders", "text/plain")
 	abstract.SetAuthenticator(auth)
 	return &UserOrdersPOSTHandler{
-		parent:           abstract,
+		AbstractHandler:  abstract,
 		userOrderService: userOrderService,
 	}
-}
-
-func (h *UserOrdersPOSTHandler) GetContentType() string {
-	return h.parent.contentType
-}
-
-func (h *UserOrdersPOSTHandler) GetMethod() string {
-	return h.parent.GetMethod()
-}
-
-func (h *UserOrdersPOSTHandler) GetPattern() string {
-	return h.parent.GetPattern()
 }
 
 func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -44,7 +32,7 @@ func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, r *http.Reques
 	//http.StatusConflict
 	//http.StatusUnprocessableEntity
 	// http.StatusInternalServerError
-	passport := h.parent.AuthOrAbort(rw, r)
+	passport := h.AuthOrAbort(rw, r)
 	if passport == nil {
 		return
 	}
@@ -53,7 +41,7 @@ func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, r *http.Reques
 
 	dto, errBody := h.extractRequestDTO(r)
 	if errBody != nil {
-		h.parent.RenderInternalServerError(rw, errBody)
+		h.RenderInternalServerError(rw, errBody)
 		return
 	}
 
@@ -68,25 +56,25 @@ func (h *UserOrdersPOSTHandler) ServeHTTP(rw http.ResponseWriter, r *http.Reques
 		}
 	}
 	if errValidation != nil {
-		h.parent.RenderResponse(rw, errStatusCode, []byte(errValidation.Error()))
+		h.RenderResponse(rw, errStatusCode, []byte(errValidation.Error()))
 		return
 	}
 
 	errOrderAdding := h.userOrderService.AddOrder(passport.GetUser().GetID(), dto.GetNumber())
 	switch errOrderAdding.(type) {
 	case *service.RepositoryError:
-		h.parent.RenderInternalServerError(rw, errOrderAdding)
+		h.RenderInternalServerError(rw, errOrderAdding)
 		return
 	case *service.DuplicatedOwnOrderError:
-		h.parent.RenderResponse(rw, http.StatusOK, []byte(""))
+		h.RenderResponse(rw, http.StatusOK, []byte(""))
 		return
 	case *service.DuplicatedSomebodyElseOrderError:
-		h.parent.RenderResponse(rw, http.StatusConflict, []byte(""))
+		h.RenderResponse(rw, http.StatusConflict, []byte(""))
 		return
 	}
 
 	resp.SetStatus(http.StatusAccepted).SetBody([]byte(dto.GetNumber()))
-	h.parent.Render(rw, resp)
+	h.Render(rw, resp)
 }
 
 func (h *UserOrdersPOSTHandler) extractRequestDTO(r *http.Request) (*request.UserOrdersPOSTDTO, error) {

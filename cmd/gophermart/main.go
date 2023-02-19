@@ -1,22 +1,14 @@
 package main
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
-	"github.com/volkoviimagnit/gofermart/internal/client"
 	"github.com/volkoviimagnit/gofermart/internal/config"
-	"github.com/volkoviimagnit/gofermart/internal/db"
-	"github.com/volkoviimagnit/gofermart/internal/handlers"
-	"github.com/volkoviimagnit/gofermart/internal/repository"
-	"github.com/volkoviimagnit/gofermart/internal/security"
-	"github.com/volkoviimagnit/gofermart/internal/server"
-	"github.com/volkoviimagnit/gofermart/internal/service"
-	"github.com/volkoviimagnit/gofermart/internal/transport"
+	"github.com/volkoviimagnit/gofermart/internal/environment"
 )
 
 func main() {
@@ -31,81 +23,49 @@ func main() {
 	}
 	logrus.SetLevel(logLevel)
 
-	logrus.Debugf("params: %+v", params)
-
-	dbConnection := db.NewConnectionPostgres(context.Background(), params.GetDatabaseURI())
-	dbConnectionError := dbConnection.TryConnect()
-	if dbConnectionError != nil {
-		logrus.Fatalf("ошибка соединения с БД - %s", dbConnectionError)
-	}
-	errMigrating := dbConnection.Migrate()
-	if errMigrating != nil {
-		logrus.Fatalf("ошибка миграций БД - %s", dbConnectionError)
-	}
-
-	messenger := transport.NewMessengerMem()
-
-	userRepository := repository.NewUserRepositoryPG(dbConnection)
-	userOrderRepository := repository.NewUserOrderRepositoryPG(dbConnection)
-	userBalanceRepository := repository.NewUserBalanceRepositoryPG(dbConnection)
-	userBalanceWithdrawRepository := repository.NewUserBalanceWithdrawRepositoryPG(dbConnection)
-
-	authenticator := security.NewAuthenticator(userRepository)
-
-	userBalanceService := service.NewUserBalanceService(
-		userBalanceRepository,
-		userBalanceWithdrawRepository,
-		userOrderRepository,
-		messenger,
+	env := environment.NewMainEnvironment(
+		params.GetDatabaseURI(),
+		params.GetAccrualSystemAddress(),
+		params.IsDebugMode(),
 	)
-
-	accrualHTTPClient := client.NewAccrualHTTPClient(params.GetAccrualSystemAddress())
-	userOrderService := service.NewUserOrderService(
-		accrualHTTPClient,
-		messenger,
-		userOrderRepository,
-		userBalanceRepository,
-		userBalanceWithdrawRepository,
-	)
-	//userOrderService.AddOrder("1", "109")
-
-	userRegisterHandler := handlers.NewUserRegisterHandler(userRepository, authenticator)
-	userLoginHandler := handlers.NewUserLoginHandler(userRepository, authenticator)
-	userOrderPOSTHandler := handlers.NewUserOrderPOSTHandler(userOrderService, authenticator)
-	userOrderGETHandler := handlers.NewUserOrdersGETHandler(userOrderRepository, authenticator)
-	userBalanceHandler := handlers.NewUserBalanceHandler(userBalanceService, authenticator)
-	userBalanceWithdrawHandler := handlers.NewUserBalanceWithdrawHandler(userBalanceService, authenticator)
-	userWithdrawalsHandler := handlers.NewUserWithdrawalsHandler(userBalanceWithdrawRepository, authenticator)
-
-	handlerCollection := server.NewHandlerCollection()
-	handlerCollection.
-		AddHandler(userRegisterHandler).
-		AddHandler(userLoginHandler).
-		AddHandler(userOrderPOSTHandler).
-		AddHandler(userOrderGETHandler).
-		AddHandler(userBalanceHandler).
-		AddHandler(userBalanceWithdrawHandler).
-		AddHandler(userWithdrawalsHandler)
-
-	router := server.NewRouterChi(handlerCollection, params.IsDebugMode())
-	err := router.Configure()
-	if err != nil {
-		logrus.Fatal("не удалось сконфигурировать роутер")
+	dbError := env.ConfigureDatabase()
+	if dbError != nil {
+		logrus.Fatalf("ошибка конфигурации БД - %s", dbError)
 	}
 
-	for i := 0; i < 10; i++ {
-		messenger.AddConsumer(service.NewOrderAccrualConsumer(messenger, accrualHTTPClient, userOrderService))
-	}
-	for i := 0; i < 10; i++ {
-		messenger.AddConsumer(service.NewUserBalanceRecalculateConsumer(userBalanceService))
+	repoError := env.ConfigureRepositories()
+	if repoError != nil {
+		logrus.Fatalf("ошибка конфигурации репозиториев - %s", repoError)
 	}
 
-	messenger.Consume(0, transport.OrderAccrualQueueName)
+	serviceError := env.ConfigureServices()
+	if serviceError != nil {
+		logrus.Fatalf("ошибка конфигурации сервисов - %s", serviceError)
+	}
+
+	handlerError := env.ConfigureHTTPHandlers()
+	if handlerError != nil {
+		logrus.Fatalf("ошибка конфигурации обработчиков - %s", handlerError)
+	}
+
+	routerError := env.ConfigureRouter()
+	if routerError != nil {
+		logrus.Fatalf("ошибка конфигурации роутеров - %s", handlerError)
+	}
+
+	consumerError := env.RunConsumers()
+	if consumerError != nil {
+		logrus.Fatalf("ошибка запуска конзюмеров - %s", consumerError)
+	}
 
 	listenShutDown()
 
 	// TODO: добавить обработку занятого порта
-	logrus.Fatal(http.ListenAndServe(params.GetRunAddress(), router.GetHandler()))
+	router, err := env.GetRouter()
+	if err != nil {
+		logrus.Fatalf("ошибка получение роутера - %s", err)
+	}
+	logrus.Fatal(http.ListenAndServe(params.GetRunAddress(), router))
 }
 
 func listenShutDown() {

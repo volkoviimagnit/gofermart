@@ -1,4 +1,4 @@
-package test
+package structs
 
 import "github.com/volkoviimagnit/gofermart/internal/handlers/request"
 

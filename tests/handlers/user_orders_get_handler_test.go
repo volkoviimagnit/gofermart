@@ -51,7 +51,7 @@ func TestUserOrdersGETHandler_ServeHTTP_Positive(t *testing.T) {
 				accessToken = testEnvironment.CreateAndAuthorizeRandomUser(t)
 			}
 
-			jsonResponse := testEnvironment.ServeHandler(testEnvironment.userOrderGETHandler, []byte(""), accessToken)
+			jsonResponse := testEnvironment.ServeHandler(testEnvironment.UserOrderGETHandler, []byte(""), accessToken)
 			err := jsonResponse.Body.Close()
 			assert.NoError(t, err)
 
@@ -95,7 +95,7 @@ func TestUserOrdersGETHandler_ServeHTTP_Negative(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, len(createdOrderDTOs), needOrders)
 			assert.NoError(t, errOrderCreating)
-			jsonResponse := testEnvironment.ServeHandler(testEnvironment.userOrderGETHandler, []byte(""), tt.token)
+			jsonResponse := testEnvironment.ServeHandler(testEnvironment.UserOrderGETHandler, []byte(""), tt.token)
 			errBodyClosing := jsonResponse.Body.Close()
 			assert.NoError(t, errBodyClosing)
 

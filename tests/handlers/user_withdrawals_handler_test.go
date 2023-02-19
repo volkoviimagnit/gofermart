@@ -55,7 +55,7 @@ func TestUserWithdrawalsHandler_ServeHTTP_Negative_Positive(t *testing.T) {
 				accessToken = testEnvironment.CreateAndAuthorizeRandomUser(t)
 			}
 
-			jsonResponse := testEnvironment.ServeHandler(testEnvironment.userWithdrawalsHandler, []byte(""), accessToken)
+			jsonResponse := testEnvironment.ServeHandler(testEnvironment.UserWithdrawalsHandler, []byte(""), accessToken)
 			err := jsonResponse.Body.Close()
 			assert.NoError(t, err)
 
@@ -97,7 +97,7 @@ func TestUserWithdrawalsHandler_ServeHTTP_Other(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			jsonResponse := testEnvironment.ServeHandler(testEnvironment.userWithdrawalsHandler, []byte(""), tt.accessToken)
+			jsonResponse := testEnvironment.ServeHandler(testEnvironment.UserWithdrawalsHandler, []byte(""), tt.accessToken)
 			defer func(Body io.ReadCloser) {
 				err := Body.Close()
 				if err != nil {

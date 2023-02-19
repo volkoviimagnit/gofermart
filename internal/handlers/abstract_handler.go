@@ -50,6 +50,10 @@ func (h *AbstractHandler) GetPattern() string {
 	return h.httpPattern
 }
 
+func (h *AbstractHandler) GetContentType() string {
+	return h.contentType
+}
+
 func (h *AbstractHandler) RenderUnauthorized(rw http.ResponseWriter) {
 	resp := response.NewResponse(h.contentType)
 	resp.SetStatus(http.StatusUnauthorized).SetBody([]byte(""))
