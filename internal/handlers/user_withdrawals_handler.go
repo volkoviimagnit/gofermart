@@ -11,7 +11,7 @@ import (
 )
 
 type UserWithdrawalsHandler struct {
-	parent        *AbstractHandler
+	*AbstractHandler
 	ubwRepository repository.IUserBalanceWithdrawRepository
 }
 
@@ -19,21 +19,9 @@ func NewUserWithdrawalsHandler(ubwRepository repository.IUserBalanceWithdrawRepo
 	abstract := NewAbstractHandler(http.MethodGet, "/api/user/withdrawals", "application/json")
 	abstract.SetAuthenticator(auth)
 	return &UserWithdrawalsHandler{
-		parent:        abstract,
-		ubwRepository: ubwRepository,
+		AbstractHandler: abstract,
+		ubwRepository:   ubwRepository,
 	}
-}
-
-func (h *UserWithdrawalsHandler) GetContentType() string {
-	return h.parent.contentType
-}
-
-func (h *UserWithdrawalsHandler) GetMethod() string {
-	return h.parent.GetMethod()
-}
-
-func (h *UserWithdrawalsHandler) GetPattern() string {
-	return h.parent.GetPattern()
 }
 
 func (h *UserWithdrawalsHandler) ServeHTTP(rw http.ResponseWriter, request *http.Request) {
@@ -42,7 +30,7 @@ func (h *UserWithdrawalsHandler) ServeHTTP(rw http.ResponseWriter, request *http
 	// http.StatusUnauthorized
 	// http.StatusInternalServerError
 
-	passport := h.parent.AuthOrAbort(rw, request)
+	passport := h.AuthOrAbort(rw, request)
 	if passport == nil {
 		return
 	}
@@ -50,11 +38,11 @@ func (h *UserWithdrawalsHandler) ServeHTTP(rw http.ResponseWriter, request *http
 	// TODO добавить сортировку по времени вывода от самых старых к самым новым
 	userWithdrawals, errFinding := h.ubwRepository.FindByUserID(passport.GetUser().GetID())
 	if errFinding != nil {
-		h.parent.RenderInternalServerError(rw, errFinding)
+		h.RenderInternalServerError(rw, errFinding)
 		return
 	}
 	if len(userWithdrawals) == 0 {
-		h.parent.RenderNoContent(rw)
+		h.RenderNoContent(rw)
 		return
 	}
 
@@ -63,20 +51,20 @@ func (h *UserWithdrawalsHandler) ServeHTTP(rw http.ResponseWriter, request *http
 
 	for _, userWithdrawal := range userWithdrawals {
 		tempDTO = response.UserWithdrawalDTO{
-			OrderNumber: userWithdrawal.GetOrderNumber(),
-			Sum:         userWithdrawal.GetSum(),
-			ProcessedAt: userWithdrawal.GetProcessedAt().Format(time.RFC3339),
+			OrderNumber: userWithdrawal.OrderNumber,
+			Sum:         userWithdrawal.Sum,
+			ProcessedAt: userWithdrawal.ProcessedAt.Format(time.RFC3339),
 		}
 		DTOs = append(DTOs, tempDTO)
 	}
 
 	body, errMarshaling := json.Marshal(DTOs)
 	if errMarshaling != nil {
-		h.parent.RenderInternalServerError(rw, errMarshaling)
+		h.RenderInternalServerError(rw, errMarshaling)
 		return
 	}
 
-	resp := response.NewResponse(h.parent.contentType)
+	resp := response.NewResponse(h.contentType)
 	resp.SetStatus(http.StatusOK).SetBody(body)
-	h.parent.Render(rw, resp)
+	h.Render(rw, resp)
 }

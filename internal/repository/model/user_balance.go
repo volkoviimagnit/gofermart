@@ -10,10 +10,6 @@ func NewUserBalance(userID string, current float64, withdrawn float64) *UserBala
 	return &UserBalance{UserID: userID, Current: current, Withdrawn: withdrawn}
 }
 
-func (ub *UserBalance) GetUserID() string {
-	return ub.UserID
-}
-
 func (ub *UserBalance) GetCurrent() float64 {
 	return ub.Current
 }

@@ -26,12 +26,12 @@ func (u *UserRepositoryPG) Insert(user model.User) error {
 	}
 
 	userToken := sql.NullString{Valid: false}
-	if len(user.GetToken()) > 0 {
+	if len(user.Token) > 0 {
 		userToken.Valid = true
-		userToken.String = user.GetToken()
+		userToken.String = user.Token
 	}
 
-	errExecuting := u.conn.Exec(sqlRequest, user.GetLogin(), user.GetPassword(), userToken)
+	errExecuting := u.conn.Exec(sqlRequest, user.GetLogin(), user.Password, userToken)
 	return errExecuting
 }
 
@@ -71,15 +71,13 @@ WHERE id = $1;`
 	} else {
 		userToken.Valid = false
 	}
-	errExecuting := u.conn.Exec(sqlRequest, user.GetID(), user.GetLogin(), user.GetPassword(), userToken)
+	errExecuting := u.conn.Exec(sqlRequest, user.GetID(), user.GetLogin(), user.Password, userToken)
 	return errExecuting
 }
 
 func (u *UserRepositoryPG) prepareModel(row pgx.Row) (*model.User, error) {
 	var userID, userLogin, userPass string
 	var userToken sql.NullString
-
-	user := model.User{}
 
 	err := row.Scan(&userID, &userLogin, &userPass, &userToken)
 	if err == pgx.ErrNoRows {
@@ -89,11 +87,14 @@ func (u *UserRepositoryPG) prepareModel(row pgx.Row) (*model.User, error) {
 		return nil, errors.New("ошибка сканирования - " + err.Error())
 	}
 
-	user.SetID(userID)
-	user.SetLogin(userLogin)
-	user.SetPassword(userPass)
+	user := model.User{
+		ID:       userID,
+		Login:    userLogin,
+		Password: userPass,
+	}
+
 	if userToken.Valid {
-		user.SetToken(userToken.String)
+		user.Token = userToken.String
 	}
 
 	return &user, nil

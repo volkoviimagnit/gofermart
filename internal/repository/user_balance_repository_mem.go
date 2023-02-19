@@ -13,7 +13,7 @@ func NewUserBalanceRepositoryMem() IUserBalanceRepository {
 }
 
 func (u *UserBalanceRepositoryMem) Insert(row model.UserBalance) error {
-	u.userBalance[row.GetUserID()] = row
+	u.userBalance[row.UserID] = row
 	return nil
 }
 
@@ -26,11 +26,11 @@ func (u *UserBalanceRepositoryMem) FinOneByUserID(userID string) (*model.UserBal
 }
 
 func (u *UserBalanceRepositoryMem) Update(row model.UserBalance) error {
-	u.userBalance[row.GetUserID()] = row
+	u.userBalance[row.UserID] = row
 	return nil
 }
 
 func (u *UserBalanceRepositoryMem) Upset(row model.UserBalance) error {
-	u.userBalance[row.GetUserID()] = row
+	u.userBalance[row.UserID] = row
 	return nil
 }

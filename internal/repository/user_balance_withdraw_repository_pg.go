@@ -20,7 +20,7 @@ func (u *UserBalanceWithdrawRepositoryPG) Insert(row model.UserBalanceWithdraw) 
 	sqlRequest := `INSERT INTO public."user_balance_withdraw" (user_id, order_number, sum, processed_at)
 	VALUES ($1, $2, $3, $4);`
 
-	errExecuting := u.conn.Exec(sqlRequest, row.GetUserID(), row.GetOrderNumber(), row.GetSum(), row.GetProcessedAt())
+	errExecuting := u.conn.Exec(sqlRequest, row.UserID, row.OrderNumber, row.Sum, row.ProcessedAt)
 	return errExecuting
 }
 

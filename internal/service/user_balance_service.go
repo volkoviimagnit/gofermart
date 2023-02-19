@@ -93,7 +93,7 @@ func (u *UserBalanceService) RecalculateByOrderNumber(orderNumber string) error 
 	if errOrder != nil {
 		return errOrder
 	}
-	userID := userOrder.GetUserID()
+	userID := userOrder.UserID
 	return u.RecalculateByUserID(userID)
 }
 

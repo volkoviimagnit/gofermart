@@ -36,13 +36,13 @@ func (u *UserOrderRepositoryPG) Upsert(row model.UserOrder) error {
 	accrual := sql.NullFloat64{
 		Valid: false,
 	}
-	if row.GetAccrual() != nil {
+	if row.Accrual != nil {
 		accrual = sql.NullFloat64{
-			Float64: *(row.GetAccrual()),
+			Float64: *(row.Accrual),
 			Valid:   true,
 		}
 	}
-	errExecuting := u.conn.Exec(sqlRequest, row.GetUserID(), row.GetNumber(), row.GetStatus().String(), accrual, row.GetUploadedAt())
+	errExecuting := u.conn.Exec(sqlRequest, row.UserID, row.Number, row.Status.String(), accrual, row.UploadedAt)
 	return errExecuting
 }
 
@@ -100,8 +100,6 @@ func (u *UserOrderRepositoryPG) prepareModel(row pgx.Row) (*model.UserOrder, err
 	var uploadedAt time.Time
 	var accrual sql.NullFloat64
 
-	userOrder := model.UserOrder{}
-
 	err := row.Scan(&userID, &orderNumber, &status, &accrual, &uploadedAt)
 	if err == pgx.ErrNoRows {
 		return nil, nil
@@ -110,13 +108,15 @@ func (u *UserOrderRepositoryPG) prepareModel(row pgx.Row) (*model.UserOrder, err
 		return nil, errors.New("ошибка сканирования - " + err.Error())
 	}
 
-	userOrder.SetUserID(userID)
-	userOrder.SetNumber(orderNumber)
-	userOrder.SetStatus(model.UserOrderStatus(status))
-	userOrder.SetUploadedAt(uploadedAt)
+	userOrder := model.UserOrder{
+		UserID:     userID,
+		Number:     orderNumber,
+		Status:     model.UserOrderStatus(status),
+		UploadedAt: uploadedAt,
+	}
 
 	if accrual.Valid {
-		userOrder.SetAccrual(&accrual.Float64)
+		userOrder.Accrual = &accrual.Float64
 	}
 
 	return &userOrder, nil

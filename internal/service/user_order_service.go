@@ -26,9 +26,9 @@ func (u *UserOrderService) Update(orderNumber string, status response.OrderStatu
 		return &RepositoryError{err: errRepository}
 	}
 	userOrderStatus := u.generateUserOrderStatus(status)
-	oldOrder.SetStatus(userOrderStatus)
-	oldOrder.SetUploadedAt(time.Now())
-	oldOrder.SetAccrual(accrual)
+	oldOrder.Status = userOrderStatus
+	oldOrder.UploadedAt = time.Now()
+	oldOrder.Accrual = accrual
 	errUpdating := u.userOrderRepository.Update(*oldOrder)
 	if errUpdating != nil {
 		return errUpdating
@@ -57,7 +57,7 @@ func (u *UserOrderService) AddOrder(userID string, orderNumber string) error {
 		return &RepositoryError{err: errRepository}
 	}
 	if oldOrder != nil {
-		isOwnOrder := oldOrder.GetUserID() == userID
+		isOwnOrder := oldOrder.UserID == userID
 		if isOwnOrder {
 			return &DuplicatedOwnOrderError{}
 		} else {
@@ -65,13 +65,14 @@ func (u *UserOrderService) AddOrder(userID string, orderNumber string) error {
 		}
 	}
 
-	m := model.UserOrder{}
-	m.SetStatus(model.UserOrderStatusNew)
-	m.SetNumber(orderNumber)
-	m.SetUserID(userID)
-	m.SetUploadedAt(time.Now())
 	accrual := 0.0
-	m.SetAccrual(&accrual)
+	m := model.UserOrder{
+		UserID:     userID,
+		Number:     orderNumber,
+		Status:     model.UserOrderStatusNew,
+		Accrual:    &accrual,
+		UploadedAt: time.Now(),
+	}
 
 	errInserting := u.userOrderRepository.Insert(m)
 	if errInserting != nil {

@@ -9,13 +9,13 @@ type UserOrderRepositoryMem struct {
 func (r *UserOrderRepositoryMem) SumAccrualByUserID(userID string) (float64, error) {
 	sum := 0.0
 	for _, userOrder := range r.userOrders[userID] {
-		if userOrder.GetAccrual() == nil {
+		if userOrder.Accrual == nil {
 			continue
 		}
-		if !userOrder.GetStatus().IsSuitable() {
+		if !userOrder.Status.IsSuitable() {
 			continue
 		}
-		sum += *userOrder.GetAccrual()
+		sum += *userOrder.Accrual
 	}
 	return sum, nil
 }
@@ -25,18 +25,18 @@ func NewUserOrderRepositoryMem() IUserOrderRepository {
 }
 
 func (r *UserOrderRepositoryMem) Insert(row model.UserOrder) error {
-	if _, isExist := r.userOrders[row.GetUserID()]; !isExist {
-		r.userOrders[row.GetUserID()] = make(map[string]model.UserOrder, 0)
+	if _, isExist := r.userOrders[row.UserID]; !isExist {
+		r.userOrders[row.UserID] = make(map[string]model.UserOrder, 0)
 	}
-	r.userOrders[row.GetUserID()][row.GetNumber()] = row
+	r.userOrders[row.UserID][row.Number] = row
 	return nil
 }
 
 func (r *UserOrderRepositoryMem) Update(row model.UserOrder) error {
-	if _, isExist := r.userOrders[row.GetUserID()]; !isExist {
-		r.userOrders[row.GetUserID()] = make(map[string]model.UserOrder, 0)
+	if _, isExist := r.userOrders[row.UserID]; !isExist {
+		r.userOrders[row.UserID] = make(map[string]model.UserOrder, 0)
 	}
-	r.userOrders[row.GetUserID()][row.GetNumber()] = row
+	r.userOrders[row.UserID][row.Number] = row
 	return nil
 }
 
@@ -57,7 +57,7 @@ func (r *UserOrderRepositoryMem) FindByUserID(userID string) ([]model.UserOrder,
 func (r *UserOrderRepositoryMem) FindOneByNumber(number string) (*model.UserOrder, error) {
 	for _, orders := range r.userOrders {
 		for _, order := range orders {
-			if order.GetNumber() == number {
+			if order.Number == number {
 				return &order, nil
 			}
 		}

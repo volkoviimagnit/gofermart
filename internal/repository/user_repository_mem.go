@@ -24,12 +24,13 @@ func NewUserRepositoryMem() IUserRepository {
 }
 
 func (u *UserRepositoryMem) Insert(user model.User) error {
-	user.SetID(randStr(10))
+	user.ID = randStr(10)
 	u.addLoginUser(user)
 	u.addTokenUser(user)
 	return nil
 }
 
+// FindOneByCredentials TODO:  добавить шифрование пароля и сверку с шифром, а не самим паролем
 func (u *UserRepositoryMem) FindOneByCredentials(login string, password string) (*model.User, error) {
 	logrus.Debugf("UserRepositoryMem.loginUsers %+v", u.loginUsers)
 
@@ -37,7 +38,7 @@ func (u *UserRepositoryMem) FindOneByCredentials(login string, password string) 
 	if !isExist {
 		return nil, errors.New("несуществующая пара логин/пароль")
 	}
-	if user.GetPassword() != password {
+	if user.Password != password {
 		return nil, errors.New("неверная пара логин/пароль")
 	}
 	return &user, nil
@@ -71,7 +72,7 @@ func (u *UserRepositoryMem) addLoginUser(user model.User) {
 	u.loginUsers[user.GetLogin()] = user
 }
 func (u *UserRepositoryMem) addTokenUser(user model.User) {
-	userToken := user.GetToken()
+	userToken := user.Token
 	if len(userToken) > 0 {
 		u.tokenUsers[userToken] = user
 	}
